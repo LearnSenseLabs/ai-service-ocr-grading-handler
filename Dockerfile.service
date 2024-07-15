@@ -1,0 +1,10 @@
+FROM public.ecr.aws/lambda/python:3.9
+
+COPY service_handler.py ${LAMBDA_TASK_ROOT}
+COPY gen_ai_calling.py .
+COPY requirements_service.txt  .
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements_service.txt --target "${LAMBDA_TASK_ROOT}"
+
+# Set the CMD to your handler (could also be done as a parameter override outside of the Dockerfile)
+CMD [ "service_handler.message_handler" ]
+# CMD [ "service_handler.main_function" ]
