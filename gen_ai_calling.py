@@ -1,8 +1,10 @@
-import requests,json,os,re
-# import google.generativeai as genai
+import requests,json,os
 import anthropic
 import replicate
 import google.generativeai as genai
+
+from llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gpt, convert_normal_to_gpt_vision
+from utils import convert_rubric_to_string, find_data_in_string, mapping_model_with_name
 
 llm_name_mapping = {
     "gpt-4-latest": {"modelName":"gpt-4o","modelClass":"gptText"},
@@ -19,20 +21,6 @@ llm_name_mapping = {
     "shozemi-gpt-latest":{"modelName":"gpt-4o","modelClass":"shozemiGptVision"},
     # "gpt-vision-noOcr":{"modelName":"gpt-4-vision-preview","modelClass":"gptVision"}
 }
-def convert_rubric_to_string(rubric_json):
-    if(isinstance(rubric_json,list)):
-        rubric_string = "Rubrics: "
-        for rubrics_json_data in rubric_json:
-            rubric_string+=(str(rubrics_json_data['score'])+" Points: ")+(rubrics_json_data['criteria']+", ")
-            # print(rubrics_json_data)
-        return rubric_string
-    else:
-        return rubric_json
-def mapping_model_with_name(model_name):
-    for key,value in llm_name_mapping.items():
-        if(key==model_name):
-            return value
-    return "model does not found"
 
 def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instruction="",scoring_criteria="",model_class="",gradingPrompt="default"):
     if(system_instruction==""):
@@ -143,199 +131,6 @@ def gpt_calling(messages,model_name='gpt-4o'):
     else:
         return {"response":"Please send user data","statusCode":422}
 
-def convert_normal_to_gpt(message):
-    updated_gpt_data = []
-    
-    # for message in normal_data:
-    if(message.__contains__('systemPrompt')):
-        updated_gpt_data.append({
-            "role": "system",
-            "content": message['systemPrompt']
-        })
-    if(message.__contains__('Rubric')):
-        updated_gpt_data.append({
-            "role": "system",
-            "content": message['Rubric']
-        })
-    if(message.__contains__('Question')):
-        updated_gpt_data.append({
-            "role": "system",
-            "content": str("Question: "+message['Question'])
-        })
-    if(message.__contains__('answer')):
-        updated_gpt_data.append({
-            "role": "user",
-            "content": str("Answer: "+str(message['answer'])) if(str(message['answer'])!="") else "No Answer"
-        })
-        # print(message)
-    return updated_gpt_data
-def convert_gpt_to_gemini(gpt_data):
-    gemini_data = {
-        "messages":[]
-    }
-    for message in gpt_data:
-        if message["role"] == "system":
-            gemini_data["messages"].append({
-                "role": "user",
-                "parts": "System: " + message["content"]
-            })
-        elif message["role"] == "user":
-            gemini_data["messages"].append({
-                "role": "user",
-                "parts": message["content"]
-            })
-
-    return gemini_data
-def convert_gpt_to_claude(gpt_data):
-    claude_data = {
-        "system": "",
-        "messages": []
-    }
-    combined_user_data = ""
-    for message in gpt_data:
-        if message["role"] == "system":
-            claude_data["system"] += message["content"].strip() + "\n\n"
-        elif message["role"] == "user":
-            # claude_data["messages"].append({
-            #     "role": "user",
-            #     "content": [{"text": message["content"], "type": "text"}]
-            # })
-            combined_user_data += message["content"]+"," 
-
-    claude_data["system"] = claude_data["system"].strip()
-    claude_data["messages"] =[{"role":"user","content":[{"text": combined_user_data, "type": "text"}]}]
-    return claude_data
-
-def convert_gpt_to_llamma(gpt_data):
-    llamma_data = {
-        "system": "",
-        "prompt": "",
-    }
-    combined_user_data = ""
-    for message in gpt_data:
-        if message["role"] == "system":
-            llamma_data["system"] += message["content"].strip() + "\n\n"
-        elif message["role"] == "user":
-            combined_user_data += message["content"]+"," 
-
-    llamma_data["system"] = llamma_data["system"].strip()
-    llamma_data["prompt"] = combined_user_data
-    return llamma_data
-
-def convert_feedback_format(feedback_json):
-    feedback_list = json.loads(feedback_json)
-    formatted_feedback = ""
-    
-    for feedback in feedback_list:
-        formatted_feedback += f"{feedback['FeedbackPointName']} - {feedback['improvement']}\n"
-        # formatted_feedback += f"level name - {feedback['levelName']}\n"
-    
-    return formatted_feedback.strip()
-
-
-def convert_gpt_to_gemini(gpt_data):
-    gemini_data = {
-        "system": "",
-        "messages": []
-    }
-    combined_user_data = ""
-    for message in gpt_data:
-        if message["role"] == "system":
-            gemini_data["system"] += message["content"].strip() + "\n\n"
-        elif message["role"] == "user":
-            # claude_data["messages"].append({
-            #     "role": "user",
-            #     "content": [{"text": message["content"], "type": "text"}]
-            # })
-            combined_user_data += message["content"]+"," 
-
-    gemini_data["system"] = gemini_data["system"].strip()
-    gemini_data["messages"] =[{"role":"user","parts":[combined_user_data]}]
-    return gemini_data
-
-def find_data_in_string(data_string,type="ocr"):
-    if(type=="ocr"):
-
-        # Regex pattern for ocr:"value" and ocr:'value'
-        pattern_ocr = r"(?i)ocr:\s*['\"](.*?)['\"]"
-
-        # Regex pattern for JSON { "ocr": "value" }
-        pattern_json = r"(?i)\{\s*['\"]ocr['\"]\s*:\s*['\"](.*?)['\"]\s*\}"
-
-        # Find all matches for both patterns
-        matches_ocr = re.findall(pattern_ocr, data_string)
-        matches_json = re.findall(pattern_json, data_string)
-
-        # Combine the results
-        matches = matches_ocr + matches_json
-        return matches[0] if len(matches) > 0 else data_string
-        # find_string_v1 = "{'ocr':"
-        # find_string_v2 = '{"ocr":'
-        # end_string_v1 = "'}"
-        # end_string_v2 = '"}'
-    elif(type=="claude-json"):
-        pattern_json = re.compile(r'\{.*?\}', re.DOTALL)
-        matches_json=pattern_json.search(data_string)
-        return matches_json.group(0) if len(matches_json.group()) > 0 else data_string
-    elif(type=="shozemi-gpt-vision"):
-        pattern_json = re.compile(r'\{.*?\}', re.DOTALL)
-        matches_json = pattern_json.findall(data_string)
-        
-        # Convert each JSON string to a Python dictionary
-        json_objects = [json.loads(match) for match in matches_json]
-        
-        # Combine all dictionaries into a list
-        combined_json = json_objects
-        
-        # Convert the list of dictionaries to a JSON array string
-        final_json_string = json.dumps(combined_json, indent=4)
-        final_string = convert_feedback_format(final_json_string)
-        return final_string
-
-def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
-    updated_gpt_vision_data = []
-    image_url_json = {}
-    # if(isinstance(message['answer'],list)):
-    #     for answer_list in range(0,len(message['answer'])):
-    #         image_url_json["image_url"+str(i+1)] = message['answer'][i]
-    # else:
-    #     image_url_json = {
-    #         'type':'image_url',
-    #         'image_url':message['answer']
-    #     }
-    if(model_class=="gpt-ocr"):
-    # for message in normal_data:
-        if(message.__contains__('systemPrompt') and message.__contains__('answer')):
-            updated_gpt_vision_data.append({
-                "role": "user",
-                "content": [
-                    {
-                        "type":"text",
-                        "text":message['systemPrompt']
-                    },
-                    {
-                        "type":"image_url",
-                        "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
-                    }
-                ]
-            })
-    else:
-        if(message.__contains__('systemPrompt') and message.__contains__('answer')):
-            updated_gpt_vision_data.append({
-                "role": "user",
-                "content": [
-                    {
-                        "type":"text",
-                        "text":message['systemPrompt']+", Question: "+message['question']+" ,"+message['Rubric']
-                    },
-                    {
-                        "type":"image_url",
-                        "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
-                    }
-                ]
-            })
-    return updated_gpt_vision_data
-
 def gen_ai_calling_proxy(reqobj):
     # model = "gpt-4o"
     grading_prompt = reqobj['gradingPrompt'] if(reqobj.__contains__('gradingPrompt')) else 'default'
@@ -348,7 +143,7 @@ def gen_ai_calling_proxy(reqobj):
         # model_name_sample = reqobj['modelName'] if(reqobj.__contains__('modelName')) else "claude-latest"
         model_name_sample = reqobj['modelName'] if(reqobj['modelName']!='') else "gpt-4-latest"
     model_name_sample = os.environ['modelName'] if(os.environ['modelName']!='') else reqobj['modelName']
-    model_data_json=mapping_model_with_name(model_name_sample)
+    model_data_json=mapping_model_with_name(model_name_sample,llm_name_mapping)
     model_name = model_data_json['modelName']
     # print("model name: ",model_name)
     model_class = model_data_json['modelClass']
