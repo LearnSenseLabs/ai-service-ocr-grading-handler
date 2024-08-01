@@ -1,6 +1,7 @@
 import requests,json,os,re
 # import google.generativeai as genai
 import anthropic
+import replicate
 import google.generativeai as genai
 
 llm_name_mapping = {
@@ -14,6 +15,8 @@ llm_name_mapping = {
     "gpt-vision":{"modelName":"gpt-4o","modelClass":"gptOCR"},
     "gpt-ocr-vision":{"modelName":"gpt-4o","modelClass":"gptVisionOCR"},
     "gpt-vision-mcq":{"modelName":"gpt-4o","modelClass":"gptVisionMCQ"},
+    "llamma-latest":{"modelName":"meta-llama-3.1-405b-instruct","modelClass":"llamaText"},
+    "shozemi-gpt-latest":{"modelName":"gpt-4o","modelClass":"shozemiGptVision"},
     # "gpt-vision-noOcr":{"modelName":"gpt-4-vision-preview","modelClass":"gptVision"}
 }
 def convert_rubric_to_string(rubric_json):
@@ -48,10 +51,13 @@ def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instru
     if(system_instruction!=None):
         if(model_class=='gptVisionOCR' or model_class=='gptVisionMCQ'):
             system_instruction_final = system_instruction+scoring_criteria
+        elif(model_class=='gptOCR'):
+            system_instruction_final = system_instruction+scoring_criteria
+            return {"systemPrompt":system_instruction_final,"answer":studentAnswer}
         else:
             system_instruction_final = system_instruction+str(maxScore)+scoring_criteria
     if(rubrics!=None):
-        rubrics =convert_rubric_to_string(rubrics)
+        rubrics = convert_rubric_to_string(rubrics)
     if(question==None):
         question =""
     if(studentAnswer==None):
@@ -199,6 +205,34 @@ def convert_gpt_to_claude(gpt_data):
     claude_data["system"] = claude_data["system"].strip()
     claude_data["messages"] =[{"role":"user","content":[{"text": combined_user_data, "type": "text"}]}]
     return claude_data
+
+def convert_gpt_to_llamma(gpt_data):
+    llamma_data = {
+        "system": "",
+        "prompt": "",
+    }
+    combined_user_data = ""
+    for message in gpt_data:
+        if message["role"] == "system":
+            llamma_data["system"] += message["content"].strip() + "\n\n"
+        elif message["role"] == "user":
+            combined_user_data += message["content"]+"," 
+
+    llamma_data["system"] = llamma_data["system"].strip()
+    llamma_data["prompt"] = combined_user_data
+    return llamma_data
+
+def convert_feedback_format(feedback_json):
+    feedback_list = json.loads(feedback_json)
+    formatted_feedback = ""
+    
+    for feedback in feedback_list:
+        formatted_feedback += f"{feedback['FeedbackPointName']} - {feedback['improvement']}\n"
+        # formatted_feedback += f"level name - {feedback['levelName']}\n"
+    
+    return formatted_feedback.strip()
+
+
 def convert_gpt_to_gemini(gpt_data):
     gemini_data = {
         "system": "",
@@ -242,35 +276,22 @@ def find_data_in_string(data_string,type="ocr"):
     elif(type=="claude-json"):
         pattern_json = re.compile(r'\{.*?\}', re.DOTALL)
         matches_json=pattern_json.search(data_string)
-        # pattern_ocr = r"(?i)format:\s*['\"](.*?)['\"]"
-
-        # # Regex pattern for JSON { "ocr": "value" }
-        # pattern_json = r"(?i)\{\s*['\"]format['\"]\s*:\s*['\"](.*?)['\"]\s*\}"
-
-        # # Find all matches for both patterns
-        # matches_ocr = re.findall(pattern_ocr, data_string)
-        # matches_json = re.findall(pattern_json, data_string)
-
-        # # Combine the results
-        # matches = matches_ocr + matches_json
         return matches_json.group(0) if len(matches_json.group()) > 0 else data_string
+    elif(type=="shozemi-gpt-vision"):
+        pattern_json = re.compile(r'\{.*?\}', re.DOTALL)
+        matches_json = pattern_json.findall(data_string)
         
-        # find_string_v1 = "format:\n\n"
-        # find_string_v2 = "\n{\n"
-        # end_string_v1 = "}"
-        # end_string_v2 = '}'
-    # ocr_start_indx = data_string.find(find_string_v1)
-    # if(ocr_start_indx==-1):
-    #     ocr_start_indx = data_string.find(find_string_v2)
-    # start_index = ocr_start_indx+ len(find_string_v1)
-    # ocr_end_indx = data_string.find(end_string_v1)
-    # if(ocr_end_indx==-1):
-    #     ocr_end_indx = data_string.find(end_string_v2)
-    # end_index = ocr_end_indx + 1
-    # ocr_data_string = data_string[start_index:end_index]
-    # if(ocr_data_string==""):
-    #     ocr_data_string = data_string
-    # return ocr_data_string
+        # Convert each JSON string to a Python dictionary
+        json_objects = [json.loads(match) for match in matches_json]
+        
+        # Combine all dictionaries into a list
+        combined_json = json_objects
+        
+        # Convert the list of dictionaries to a JSON array string
+        final_json_string = json.dumps(combined_json, indent=4)
+        final_string = convert_feedback_format(final_json_string)
+        return final_string
+
 def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
     updated_gpt_vision_data = []
     image_url_json = {}
@@ -320,12 +341,13 @@ def gen_ai_calling_proxy(reqobj):
     grading_prompt = reqobj['gradingPrompt'] if(reqobj.__contains__('gradingPrompt')) else 'default'
     if(grading_prompt=='essay'):
         # model_name_sample = "gpt-vision-mcq"
-        model_name_sample = "claude-latest"
+        model_name_sample = "gpt-4-latest"
     elif(grading_prompt=='ocr' or grading_prompt=='OCR'):
         model_name_sample = "gpt-ocr-vision"
     else:
         # model_name_sample = reqobj['modelName'] if(reqobj.__contains__('modelName')) else "claude-latest"
-        model_name_sample = os.environ['modelName'] if(os.environ['modelName']!='') else "gpt-4-latest"
+        model_name_sample = reqobj['modelName'] if(reqobj['modelName']!='') else "gpt-4-latest"
+    model_name_sample = os.environ['modelName'] if(os.environ['modelName']!='') else reqobj['modelName']
     model_data_json=mapping_model_with_name(model_name_sample)
     model_name = model_data_json['modelName']
     # print("model name: ",model_name)
@@ -335,7 +357,7 @@ def gen_ai_calling_proxy(reqobj):
     question_data = reqobj['questionInfo']['question'] if('question' in reqobj['questionInfo']) else ""
     student_answer = reqobj['questionInfo']['studentAnswer'] if('studentAnswer' in reqobj['questionInfo']) else "No Answer"
     student_answer_url = reqobj['questionInfo']['studentAnswerUrl'] if('studentAnswerUrl' in reqobj['questionInfo']) else []
-    if(student_answer=='' and model_class!='gptText'):
+    if((student_answer=='' and model_class!='gptText') or (model_class=='shozemiGptVision')):
         if(isinstance(student_answer_url,list)):
             if(len(student_answer_url)!=0):
                 student_answer = student_answer_url
@@ -345,10 +367,15 @@ def gen_ai_calling_proxy(reqobj):
     elif(student_answer=='' and model_class=='gptText'):
         student_answer_url = []
     maxScore = reqobj['questionInfo']['maxScore'] if('maxScore' in reqobj['questionInfo']) else 1
-    if(model_class=='gptOCR' or model_class=='gptVisionOCR' or model_class=='gptVisionMCQ'):
+    if(model_class=='gptOCR' or model_class=='gptVisionOCR' or model_class=='gptVisionMCQ' or model_class=='shozemiGptVision'):
         # system_instruction = "Please look at given image and give feedback on student's visual and texual representation of the answer you are giving ocr in 20 words as 'Description': (write 'Description:' before the Description)"
         system_instruction = "Please look at the given image and give feedback on the student's visual representation of the answer you, Give concrete examples of how to improve, based on rubrics provided. Be extremely concise, Be direct and to the point Be straightforward and clear, Feedback in 40 words or less, Shortest feedback for fully correct answer, Strictly only consider matching criteria for scoring, Maximum Score: "
-        if(model_class=='gptVisionOCR'):
+        if(model_class=='shozemiGptVision' and student_answer!=''):
+            # system_instruction = os.getenv("SYSTEM_INSTRUCTION_SHOZEMI_p1")
+            system_instruction = '### Instructions ###\n\n\n                    You are a teacher providing feedback on handwritten responses to essay questions. You will give me feedback on whether he/she has written 4 paragraphs (a paragraph is something where the new point is written in a new line with some space left to indicate it), does each paragraph has an indentation( it is defined as user has kept some space before starting first word of a paragraph, generally small space at left end), give which paragraph is balanced or not(by calculation word count in each paragraph but do not show it), does sides are aligned or not( here alignment refer to whether each line is written with similar space to the left end), Overall word count should be in the range of 100 to 120.\n\n\n                        ### Your Feedback Style ###\n\n\n                   Be extremely concise and do not give flattering words. Be direct and to the point. Do not be rude, but do not be overly polite. Be straightforward and clear. Give me feedback for each point in five level system: Effective, Good, Normal, Fair, and Poor also give a little feedback for each point where students can improve with some example .'
+            scoring_criteria = '\n\n\nfollow this JSON format strictly to give a response: {"FeedbackPointName": Name of feedback point, "levelName": feedback level out of the five-level system, "improvement": suggestions to improve it with example in 1 or 2 lines.}'
+            
+        elif(model_class=='gptVisionOCR'):
             # system_instruction = "### Instructions ### You are a teacher providing feedback on visual assessment questions. The description of the student answer will be provided below. You will provide feedback on specific parts of the response ignoring spelling and grammatical mistakes, and clearly list every instance of student response which needs improvement with concrete examples of how to make it better. For every mistake, you will provide direct examples of how the student skill can be improved. don't meansion any thing about grammatical or spelling mistake### Your Feedback Style ###\\n\\n\\n  Be extremely concise and don't give flattering words. Be direct and to the point. Don't be rude, but don't be overly polite. Be straightforward and clear. give your feedback in 40 words, Maximum Score: "
             system_instruction = "You will read the handwritting in the given image, write what you read in the image as it is, "
             # scoring_criteria = "give it in the json as {'ocr':value}"
@@ -368,7 +395,7 @@ def gen_ai_calling_proxy(reqobj):
             system_instruction = ""
         messages = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer,maxScore=maxScore,system_instruction=system_instruction,gradingPrompt=grading_prompt)
         # print("messages: ",messages)
-    # system_prompt = messages[0]['systemPrompt']
+    # system    _prompt = messages[0]['systemPrompt']
     
     if(model_class=='gptText'):
         try:
@@ -456,4 +483,39 @@ def gen_ai_calling_proxy(reqobj):
             gemini_response = {"feedback":"Gemini does not found answer","score":0,'maxScore':1}
             gemini_statusCode = 400
         return {"statusCode":gemini_statusCode,"response":gemini_response}
-    
+    elif(model_class=='llamaText'):
+        # print(messages)
+        reqobj_llamma = convert_gpt_to_llamma(convert_normal_to_gpt(messages))
+        input = {
+            "system_prompt":reqobj_llamma['system'],
+            "prompt": reqobj_llamma['prompt'],
+            "max_tokens": 1524
+        }
+
+        output = replicate.run(
+            "meta/meta-llama-3.1-405b-instruct",
+            input=input
+        )
+        final_out =  "".join(output)
+        # print(final_out)
+        return {"statusCode":200,"response":final_out}
+    elif(model_class=='shozemiGptVision'):
+        ### task: add error handling for all three gpt vision calls
+        # put all under feedback ....    
+        res_gpt_p1 = gpt_vision_calling(messages_vision=messages_vision,model_name=model_name)
+        system_instruction = '### Instructions ###\n\n\n                    You are a teacher providing feedback on handwritten responses to essay questions. You will give me feedback on whether he/she has used transition words or phrases to connect ideas(which convey information clearly and precisely by establishing logical connections between the sentences), Spelling(is there a spelling mistake if there then how many), Grammar(is there grammatical mistake if there then how many), Legible Handwriting(is user handwriting is easy to read or not)\n\n\n                        ### Your Feedback Style ###\n\n\n                   Be extremely concise and do not give flattering words. Be direct and to the point. Do not be rude, but do not be overly polite. Be straightforward and clear. Give me feedback for each point in the five-level system: Effective, Good, Normal, Fair, and Poor also give a little feedback for each point where students can improve with some example .'
+        scoring_criteria = '\n\n\nfollow this JSON format strictly to give a response: {"FeedbackPointName": Name of feedback point, "levelName": feedback level out of the five-level system, "improvement": suggestions to improve it with example in 1 or 2 lines.}'
+        messages_vision_p2 = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer,
+                                        maxScore=maxScore,system_instruction=system_instruction,scoring_criteria=scoring_criteria,model_class=model_class,gradingPrompt=grading_prompt)
+
+        res_gpt_p2 = gpt_vision_calling(messages_vision=messages_vision_p2,model_name=model_name)
+        system_instruction = '### Instructions ###\n\n\n                    You are a teacher providing feedback on handwritten responses to essay questions. You will give me feedback on whether he/she has a clearly stated opinion, supported with facts/reasons whenever required, and is there good vocabulary usage on the topic (synonyms and antonyms, vocabulary from Monoxer), is the user using the subject sentence, transitions between topics, transitions between topics and conclusion effectively, does he demonstrates correct use of an adverb (a word or phrase that qualifies an adjective, verb expressing a relation of place, time, circumstance, manner, cause, degree, etc.), does conclusion rephrases the main points made in body paragraph 1 and 2\n\n\n                        ### Your Feedback Style ###\n\n\n                   Be extremely concise and do not give flattering words. Be direct and to the point. Do not be rude, but do not be overly polite. Be straightforward and clear. Give me feedback for each point in the five-level system: Effective, Good, Normal, Fair, and Poor also give a little feedback for each point where students can improve with some example .'
+        scoring_criteria = '\n\n\nfollow this JSON format strictly to give a response: {"FeedbackPointName": Name of feedback point, "levelName": feedback level out of the five-level system, "improvement": suggestions to improve it with example in 1 or 2 lines.}'
+        messages_vision_p3 = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer,
+                                        maxScore=maxScore,system_instruction=system_instruction,scoring_criteria=scoring_criteria,model_class=model_class,gradingPrompt=grading_prompt)
+
+        res_gpt_p3 = gpt_vision_calling(messages_vision=messages_vision_p3,model_name=model_name)
+        # print(res_gpt_p1['response']+res_gpt_p2['response']+res_gpt_p3['response'])
+        final_res_gpt = find_data_in_string(res_gpt_p1['response']+res_gpt_p2['response']+res_gpt_p3['response'],type='shozemi-gpt-vision')
+        
+        return {"statusCode":200,"response":{'feedback':final_res_gpt,'score':10,'maxScore':15}}
