@@ -4,6 +4,7 @@ COPY service_handler.py ${LAMBDA_TASK_ROOT}
 COPY llm_format_convertion.py .
 COPY utils.py .
 COPY gen_ai_calling.py .
+COPY llm_calling.py .
 COPY requirements_service.txt  .
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements_service.txt --target "${LAMBDA_TASK_ROOT}"
 

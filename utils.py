@@ -1,4 +1,35 @@
-import json,re
+import json,re,os,boto3
+
+sqs = boto3.resource('sqs',
+                     aws_access_key_id=os.environ['USER_ACCESS_KEY_ID'],
+                     aws_secret_access_key=os.environ['USER_SECRET_ACCESS_KEY'],
+                     region_name="ap-south-1"
+                     )
+
+def add_response_to_db(user_response,reqobj):
+    ai_service_db_update_queue = sqs.get_queue_by_name(QueueName=os.environ['AI_SERVICE_DB_UPDATE_QUEUE'])
+    
+    ## add test case for checking studentId,scanId,queId exist or not.
+    student_id = reqobj['studentId'] if (reqobj.__contains__('studentId')) else ''
+    
+    scan_id = reqobj['scanId'] if (reqobj.__contains__('scanId')) else ''
+    
+    que_id = reqobj['queId'] if (reqobj.__contains__('queId')) else ''
+    
+    reqobj_to_update = {
+        'key_value_pair_to_update_data':{'feedback':user_response['response']['feedback'],
+                                'score':user_response['response']['score'],
+                                'status':'processed',
+                                },
+        'key_value_pair_to_filter_data':{'studentId':student_id,'scanId':scan_id,'queId':que_id},
+        'usage':'updateData'
+    }
+    
+    response_flag = ai_service_db_update_queue.send_message(MessageBody=json.dumps(reqobj_to_update),
+                                  MessageGroupId=str(scan_id))
+
+    return response_flag
+
 def convert_rubric_to_string(rubric_json):
     if(isinstance(rubric_json,list)):
         rubric_string = "Rubrics: "
