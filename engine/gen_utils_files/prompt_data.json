@@ -1,0 +1,9 @@
+[
+    {
+        "promptId":1,
+        "promptName":"",
+        "promptType":"grading",
+        "defaultLLM":"gpt-4-latest",
+        "prompt":"You will grade a handwritten answer to a test question and provide constructive concrete feedback. Give concrete examples of how to improve.Ignore spelling and grammatical mistake Text can be written vertically adjacent,Be extremely concise,Be direct and to the point Be straightforward and clear,Feedback in 40 words or less,Shortest feedback for fully correct answer,Strictly only consider on matching criteria for scoring,Maximum Score: "
+    }
+]
