@@ -7,20 +7,24 @@ def convert_normal_to_gpt(message):
             "role": "system",
             "content": message['systemPrompt']
         })
-    if(message.__contains__('Rubric')):
+    # if(message.__contains__('Rubric')):
+    if(message.__contains__('rubric')):
         updated_gpt_data.append({
             "role": "system",
-            "content": message['Rubric']
+            "content": message['rubric']
+            # "content": message['Rubric']
         })
-    if(message.__contains__('Question')):
+    # if(message.__contains__('Question')):
+    if(message.__contains__('question')):
         updated_gpt_data.append({
             "role": "system",
-            "content": str("Question: "+message['Question'])
+            "content": str("question: "+message['question'])
         })
-    if(message.__contains__('answer')):
+    # if(message.__contains__('answer')):
+    if(message.__contains__('studentAnswer')):
         updated_gpt_data.append({
             "role": "user",
-            "content": str("Answer: "+str(message['answer'])) if(str(message['answer'])!="") else "No Answer"
+            "content": str("studentAnswer: "+str(message['answer'])) if(str(message['answer'])!="") else "No Answer"
         })
         # print(message)
     return updated_gpt_data
@@ -108,7 +112,9 @@ def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
     #         'type':'image_url',
     #         'image_url':message['answer']
     #     }
-    if(model_class=="gpt-ocr"):
+    
+    # if(model_class=="gpt-ocr"):
+    if(model_class=="openai-ocr"):
     # for message in normal_data:
         if(message.__contains__('systemPrompt') and message.__contains__('answer')):
             updated_gpt_vision_data.append({
@@ -120,7 +126,8 @@ def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
                     },
                     {
                         "type":"image_url",
-                        "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
+                        # "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
+                        "image_url":{"url":message['user_image']}
                     }
                 ]
             })
