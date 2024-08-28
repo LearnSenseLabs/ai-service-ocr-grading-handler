@@ -1,7 +1,16 @@
 FROM public.ecr.aws/lambda/python:3.9
 
 COPY service_handler.py ${LAMBDA_TASK_ROOT}
-COPY gen_ai_calling.py .
+
+RUN mkdir ${LAMBDA_TASK_ROOT}/app
+RUN mkdir ${LAMBDA_TASK_ROOT}/engine
+RUN mkdir ${LAMBDA_TASK_ROOT}/engine/core
+RUN mkdir ${LAMBDA_TASK_ROOT}/engine/gen_utils_files
+
+COPY engine ${LAMBDA_TASK_ROOT}/engine
+COPY engine/core ${LAMBDA_TASK_ROOT}/engine/core
+COPY engine/gen_utils_files ${LAMBDA_TASK_ROOT}/engine/gen_utils_files
+
 COPY requirements_service.txt  .
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements_service.txt --target "${LAMBDA_TASK_ROOT}"
 
