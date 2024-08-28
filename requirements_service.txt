@@ -5,3 +5,4 @@ textblob==0.17.1
 openai
 anthropic
 google-generativeai
+replicate
