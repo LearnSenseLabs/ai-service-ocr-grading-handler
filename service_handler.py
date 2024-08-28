@@ -4,8 +4,8 @@
 import uuid,os,json
 from datetime import datetime
 
-from gen_ai_calling import gen_ai_calling_proxy
-from utils import add_response_to_db
+from engine.core.gen_ai_calling import gen_ai_calling_proxy
+from engine.gen_utils_files.utils import add_response_to_db
 
 generic_forbidden_response = {
     "statusCode": 403,
