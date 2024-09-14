@@ -3,7 +3,7 @@ import anthropic
 import replicate
 import google.generativeai as genai
 
-from llm_format_convertion import convert_normal_to_gpt, convert_normal_to_gpt_vision
+from engine.core.llm_format_convertion import convert_normal_to_gpt, convert_normal_to_gpt_vision
 from engine.gen_utils_files.utils import find_data_in_string
 
 def gpt_vision_calling(messages_vision,model_name='gpt-4-vision-preview'):

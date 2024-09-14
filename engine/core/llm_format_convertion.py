@@ -1,3 +1,5 @@
+import base64,httpx
+
 def convert_normal_to_gpt(message):
     updated_gpt_data = []
     
@@ -147,3 +149,34 @@ def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
                 ]
             })
     return updated_gpt_vision_data
+
+def convert_normal_to_claude_vision(message, model_class="claude-vision"):
+    updated_claude_vision_data = []
+
+    if model_class == "claude-vision":
+        # if 'systemPrompt' in message and 'user_image' in message:
+        #     image_data = message['user_image']
+        #     if isinstance(image_data, str) and image_data.startswith('http'):
+        #         image_url = image_data
+        #     else:
+        #         raise ValueError("Image data must be a valid URL.")
+        if(message.__contains__('systemPrompt')):
+            image_url = message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']
+            updated_claude_vision_data.append({
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": message['systemPrompt']
+                    },
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/webp",
+                            "data": base64.b64encode(httpx.get(image_url).content).decode("utf-8"),
+                    },
+                }
+                ]
+            })
+    return updated_claude_vision_data   

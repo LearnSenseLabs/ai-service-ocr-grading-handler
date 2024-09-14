@@ -3,8 +3,8 @@ import anthropic
 import replicate
 import google.generativeai as genai
 
-from llm_calling import calude_calling, gpt_calling, gpt_vision_calling
-from llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gpt, convert_normal_to_gpt_vision
+from engine.core.llm_calling import calude_calling, gpt_calling, gpt_vision_calling
+from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gpt, convert_normal_to_gpt_vision
 from engine.gen_utils_files.utils import convert_rubric_to_string, find_data_in_string, mapping_model_with_name
 
 llm_name_mapping = {
