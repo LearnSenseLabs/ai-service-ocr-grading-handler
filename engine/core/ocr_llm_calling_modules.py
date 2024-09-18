@@ -110,7 +110,7 @@ def openai_scoring(student_answer,maxScore,rubrics,question,system_prompt="",mod
             # print("output: ",response)
             response_json = json.loads(response["choices"][0]["message"]["content"])
             gpt_return_json = {
-                "feedback":response_json["feedback"],
+                "aiFeedback":response_json["feedback"],
                 "score":float(response_json["score"]),
                 "maxScore":float(response_json["maxScore"])
             }
@@ -151,6 +151,6 @@ def anthropic_scoring(student_answer,maxScore,rubrics,question,system_prompt="",
         claude_response['maxScore'] = float(claude_response['maxScore'])
         claude_statusCode = 200
     else:
-        claude_response = {"feedback":"Claude does not found answer","score":0,'maxScore':1}
+        claude_response = {"aiFeedback":"Claude does not found answer","score":0,'maxScore':1}
         claude_statusCode = 400
     return {"statusCode":claude_statusCode,"response":claude_response}

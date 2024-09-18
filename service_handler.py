@@ -45,12 +45,17 @@ def message_handler(event, context):
         if (urlpath == "/generate"):
 
             reqobj = create_reqobj_scan(headers, event, "json")
-            response = gen_ai_calling_proxy(reqobj)
-            # try:
-            #     db_add_flag=add_response_to_db(response,reqobj)
-            #     print(db_add_flag)
-            # except Exception as e:
-            #     raise Exception("Error in adding response to DB!")
+            # print("reqobj: ",reqobj)
+            
+            ## added support for multiple questions in one request processing like adding loop to process questions one by one...
+            for reqobj_question_wise in reqobj:
+                response = gen_ai_calling_proxy(reqobj_question_wise)
+                # print("response: ",response)
+                try:
+                    db_add_flag=add_response_to_db(response,reqobj_question_wise)
+                    # print("db_add_flag: ",db_add_flag)
+                except Exception as e:
+                    raise Exception("Error in adding response to DB!")
         else:
             raise Exception("Unsupported path!")
 
@@ -64,7 +69,7 @@ def message_handler(event, context):
                         # "Access-Control-Allow-Methods": "*",  # Allow only GET request
                         "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
                         },
-            "body": json.dumps(response)
+            "body": json.dumps({"feedback":"question graded and database updated succesfully."})
         }
 
     except Exception as e:
@@ -97,48 +102,23 @@ def create_reqobj_scan(headers, body, reqtype):
             return False
 
     if (reqtype == "json"):
-
-        # parser = StreamingFormDataParser(headers=headers)
-
-        # model_class_target = ValueTarget()
-        # model_name_target = ValueTarget()
-        # user_data_json_target = ValueTarget()
-        
-        # parser.register("modelClass", model_class_target)
-        # parser.register("modelName", model_name_target)
-        # parser.register("userDataJson",user_data_json_target)
-        
-        # # decode event body passed by the API
-        # mydata = base64.b64decode(body)
-
-        # # parse the decoded body based on registers defined above.
-        # parser.data_received(mydata)
-
-        # # covert binary value to UTF-8 format.
-        # modelClass = model_class_target.value.decode("utf-8")
-        # modelName = model_name_target.value.decode("utf-8")
-        # userDataJson = user_data_json_target.decode("utf-8")
-        
-        # reqobj = {
-        #     "modelClass": modelClass,
-        #     "modelName": modelName,
-        #     "userDataJson": json.loads(userDataJson)
-        # }
         reqobj_body = json.loads(body['Records'][0]['body'])
+        
+        ## to accoumulate multiple questions in one request
         if(isinstance(reqobj_body, list)):
-            reqobj = reqobj_body[0]
-        else:
             reqobj = reqobj_body
+        else:
+            reqobj = [reqobj_body]
         # reqobj = json.loads(body['Records'][0]['body'])[0]
     
     else:
 
         raise Exception("Invalid request type!")
 
-    if ('scanId' not in reqobj or reqobj['scanId'] == ''):
-        reqobj['scanId'] = str(uuid.uuid4())
+    # if ('scanId' not in reqobj or reqobj['scanId'] == ''):
+    #     reqobj['scanId'] = str(uuid.uuid4())
 
-    reqobj['receivedAt'] = datetime.utcnow().isoformat()
+    # reqobj['receivedAt'] = datetime.utcnow().isoformat()
 
     return reqobj
 
@@ -166,6 +146,31 @@ if __name__ == "__main__":
 #         }
 #     ]
 # }
+#     event = {
+#     "Records": [
+#         {
+#             "messageId": "c1c1b9bc-e087-4eff-a92c-6fc052faa978",
+#             "receiptHandle": "AQEBPJ043L3v9Rjbfb0meLpklYdJ4l1tToOoi+0YUpE60qsf0rmWulvBI0fRYjByoiqtZh+UvQDuAkutzdmuePjAhc8gZ/HQaXnZJB1vIk6ZSBUXk+b5CUdpprAYVulc2G09M3VQRfEUzt1niGsjfgwJZw4pz9+QrEPppLfDwA+sbuVQ6TL1difmCTbXdPHvURExiksKK3WwV4btjFwOnlslUiGUAFDEevUOP5g0K6OtkM7KpqgDK+hsbZM/+TE/VauQ9PuTas5ooIpHH7/QJw6QAB4EIlErixFBBuB0hUH30pWuv7flMt4jbzpjUU0hbywf",
+#             "body": "[{\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"Solve for y: 4y + 5 = 21\", \"studentAnswer\": \"44+5= 21 44:21-5 4- 20 y = 5\", \"rubrics\": [{\"rubricId\": \"f63de483-5b44-4892-9cdc-0996fc1e3b2a\", \"score\": 1, \"criteria\": \"Correctly isolating the term 4y by subtracting 5 from both sides.\"}, {\"rubricId\": \"f391ffa8-c28f-4440-b24d-8906a09411c7\", \"score\": 1, \"criteria\": \"Correctly solving for y to get y = 4\"}], \"maxScore\": 2, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/master/66e53d08feff562691036a58/a572afc7-5d72-4516-b195-b94418232b4f/ans_crop/5c09c9e5-eb56-4553-bc50-d23d42491f6d.webp\"}, \"gradingPrompt\": \"ocr\", \"status\": \"processing\", \"scanId\": \"a572afc7-5d72-4516-b195-b94418232b4f\", \"studentId\": \"H77IwaFVCQz-a1dPY3MZ9\", \"queId\": \"f0c0d293-332e-4b60-be4a-e4969ef71da1\"}, {\"modelName\": \"gpt-4-latest\", \"questionInfo\": {\"question\": \"The sum of a number and its double is 18. Find the number.\", \"studentAnswer\": \"n + 2n = 18 3 n = 18 n = 6\", \"rubrics\": [{\"rubricId\": \"6c1d8148-a95e-49f2-bd6a-5efc7066f4da\", \"score\": 1, \"criteria\": \"Setting up the correct equation n + 2n = 18 or 3n = 18\"}, {\"rubricId\": \"f23461e3-7476-4ae3-bdbd-f88a5334ea7e\", \"score\": 1, \"criteria\": \"Correctly solving for n to get n = 6\"}], \"maxScore\": 1, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/master/66e53d08feff562691036a58/a572afc7-5d72-4516-b195-b94418232b4f/ans_crop/0238e803-b814-4b79-8e27-b7e56ad825ea.webp\"}, \"gradingPrompt\": \"default\", \"status\": \"processing\", \"scanId\": \"a572afc7-5d72-4516-b195-b94418232b4f\", \"studentId\": \"H77IwaFVCQz-a1dPY3MZ9\", \"queId\": \"421dce28-a434-4599-afbb-3605270cf42e\"}]",
+#             "attributes": {
+#                 "ApproximateReceiveCount": "1",
+#                 "AWSTraceHeader": "Root=1-66e84b06-16f782b9748626ee65cc4a09;Parent=448f74460b92f63e;Sampled=0;Lineage=1:5625e7f4:0",
+#                 "SentTimestamp": "1726499598382",
+#                 "SequenceNumber": "18888727970895343616",
+#                 "MessageGroupId": "66e4167e910c6a1ee5c5230a",
+#                 "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+#                 "MessageDeduplicationId": "39068ad7161f5ad6337a88e40d4e7d7ebe88244a353b4da59725e497a0fa5129",
+#                 "ApproximateFirstReceiveTimestamp": "1726499598382"
+#             },
+#             "messageAttributes": {},
+#             "md5OfBody": "485324de62ad35c58bfc024338d37e38",
+#             "eventSource": "aws:sqs",
+#             "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue.fifo",
+#             "awsRegion": "ap-south-1"
+#         }
+#     ]
+# }
+
     event = {}
     context = {}
     result = message_handler(event=event, context=context)

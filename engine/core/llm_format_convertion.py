@@ -103,7 +103,7 @@ def convert_gpt_to_gemini(gpt_data):
     gemini_data["messages"] =[{"role":"user","parts":[combined_user_data]}]
     return gemini_data
 
-def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
+def convert_normal_to_gpt_vision(message,model_class="openai-ocr"):
     updated_gpt_vision_data = []
     image_url_json = {}
     # if(isinstance(message['answer'],list)):
@@ -116,7 +116,7 @@ def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
     #     }
     
     # if(model_class=="gpt-ocr"):
-    if(model_class=="openai-ocr"):
+    if(model_class=="openai-ocr" or model_class=="gpt-ocr"):
     # for message in normal_data:
         if(message.__contains__('systemPrompt') and message.__contains__('answer')):
             updated_gpt_vision_data.append({
@@ -129,7 +129,7 @@ def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
                     {
                         "type":"image_url",
                         # "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
-                        "image_url":{"url":message['user_image']}
+                        "image_url":{"url":message['answerUrl'] if(isinstance(message['answerUrl'],str)) else ""}
                     }
                 ]
             })
@@ -140,11 +140,12 @@ def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
                 "content": [
                     {
                         "type":"text",
-                        "text":message['systemPrompt']+", Question: "+message['question']+" ,"+message['Rubric']
+                        "text":message['systemPrompt']+", Question: "+message['question']+" ,"+message['rubric']
                     },
                     {
                         "type":"image_url",
-                        "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
+                        # "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
+                        "image_url":{"url":message['answerUrl'] if(isinstance(message['answerUrl'],str)) else ""}
                     }
                 ]
             })

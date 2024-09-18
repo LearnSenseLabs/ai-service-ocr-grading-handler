@@ -23,7 +23,7 @@ llm_name_mapping = {
     # "gpt-vision-noOcr":{"modelName":"gpt-4-vision-preview","modelClass":"gptVision"}
 }
 
-def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instruction="",scoring_criteria="",model_class="",gradingPrompt="default"):
+def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instruction="",scoring_criteria="",model_class="",gradingPrompt="default",answerUrl=""):
     if(system_instruction==""):
         if(gradingPrompt=="default"):
             if(os.getenv("SYSTEM_INSTRUCTION_DEFAULT")==None):
@@ -35,6 +35,13 @@ def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instru
                 system_instruction = "You will grade a handwritten answer to a test question and provide constructive concrete feedback. How to give feedback:Show how to improve e.g. saying '...' will make answer more complete - Quote student writing and show how to improve e.g. you said '...' but you can say this instead '...' to clearly state your idea. - For incorrect answer, say how to write correct answer e.g. you said '...' but you need to say '...'. - For ambiguous answer, say '...' is not clear, you can say '...' for clarity. - For transition clarity, show how to improve: e.g. 'You can improve transition by writing ...'. - Give maximum 100 words feedback. - Ignore minor errors.Strictly only consider on matching criteria for scoring, out of Maximum Score:"
             else:
                 system_instruction = os.getenv("SYSTEM_INSTRUCTION_ESSAY")
+        elif(gradingPrompt=="ocr"):
+            if(os.getenv("SYSTEM_INSTRUCTION_DEFAULT")==None):
+                system_instruction ="### Instructions ### You are a teacher providing feedback on handwritten responses to assessment questions. The handwriting will be digitized by OCR and provided below. You will provide feedback on specific parts of the response ignoring spelling and grammatical mistakes, and clearly list every instance of student response which needs improvement with concrete examples of how to make it better. For every mistake, you will provide direct examples of how the student skill can be improved. don't meansion any thing about grammatical or spelling mistake### Your Feedback Style ###\\n\\n\\n  Be extremely concise and don't give flattering words. Be direct and to the point. Don't be rude, but don't be overly polite. Be straightforward and clear. give your feedback in 40 words, Maximum Score: "
+            else:
+                system_instruction = os.getenv("SYSTEM_INSTRUCTION_DEFAULT")
+        elif(gradingPrompt=="omr"):
+            system_instruction = "You will grade a multiple choice question response with just telling whether given response is correct or not, don't provide any feedback on how to improve. Give the feedback in very brief. "
     if(scoring_criteria==""):
         scoring_criteria = ",Scoring Criteria \n\n## The following must be in a JSON format with this schema:\\n\\n   { \\\"feedback\\\": Your feedback here in one paragraph of type string,\\n                        \\\"score\\\": Student Score,\\n                        \\\"maxScore\\\": Maximum Score }"
     if(system_instruction!=None):
@@ -48,14 +55,15 @@ def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instru
     if(rubrics!=None):
         rubrics = convert_rubric_to_string(rubrics)
     if(question==None):
-        question =""
+        question = ""
     if(studentAnswer==None):
         studentAnswer = ""
     return {
         "systemPrompt":system_instruction_final,
-        "Rubric":rubrics,
-        "Question":question,
-        "answer":studentAnswer
+        "rubric":rubrics,
+        "question":question,
+        "answer":studentAnswer,
+        "answerUrl":answerUrl,
         # "answer":studentAnswer+",  Please use this Scoring criteria to give a response in Json Format of : "+scoring_criteria
     }
     
@@ -70,7 +78,7 @@ def gen_ai_calling_proxy(reqobj):
     else:
         # model_name_sample = reqobj['modelName'] if(reqobj.__contains__('modelName')) else "claude-latest"
         model_name_sample = reqobj['modelName'] if(reqobj['modelName']!='') else "gpt-4-latest"
-    model_name_sample = os.environ['modelName'] if(os.environ['modelName']!='') else reqobj['modelName']
+    # model_name_sample = os.environ['modelName'] if(os.environ['modelName']!='') else reqobj['modelName']
     model_data_json=mapping_model_with_name(model_name_sample,llm_name_mapping)
     model_name = model_data_json['modelName']
     # print("model name: ",model_name)
@@ -109,8 +117,9 @@ def gen_ai_calling_proxy(reqobj):
         else:
             # scoring_criteria = " with a detected value in the json as {'ocr':value}"
             scoring_criteria = ", in a JSON format with this schema:\\n{ \\\"feedback\\\": Your feedback here in one paragraph of type string,\\n     \\\"score\\\": Student Score,\\n    \\\"maxScore\\\": Maximum Score }"
-        messages_vision = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer,
-                                          maxScore=maxScore,system_instruction=system_instruction,scoring_criteria=scoring_criteria,model_class=model_class,gradingPrompt=grading_prompt)
+        messages_vision = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer,maxScore=maxScore,
+                                                 system_instruction=system_instruction,scoring_criteria=scoring_criteria,model_class=model_class,
+                                                 gradingPrompt=grading_prompt,answerUrl=student_answer_url)
     else:
         if(model_class=='gptText' and student_answer==''):
             system_instruction = os.getenv("SYSTEM_INSTRUCTION_EMPTY")
@@ -183,7 +192,7 @@ def gen_ai_calling_proxy(reqobj):
                 gemini_response['maxScore']=reqobj['questionInfo']['maxScore']
             gemini_statusCode = 200
         else:
-            gemini_response = {"feedback":"Gemini does not found answer","score":0,'maxScore':1}
+            gemini_response = {"aiFeedback":"Gemini does not found answer","score":0,'maxScore':1}
             gemini_statusCode = 400
         return {"statusCode":gemini_statusCode,"response":gemini_response}
     elif(model_class=='llamaText'):
