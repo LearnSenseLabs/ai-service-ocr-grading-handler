@@ -5,7 +5,13 @@ sqs = boto3.resource('sqs',
                      aws_secret_access_key=os.environ['USER_SECRET_ACCESS_KEY'],
                      region_name="ap-south-1"
                      )
-
+def field_exist_or_not(user_response,default_response,field_to_check):
+    if(user_response['response'].__contains__(field_to_check)):
+        requested_field_data = user_response['response'][field_to_check] if (user_response['response'][field_to_check]!="") else default_response
+    else:
+        requested_field_data = default_response
+    return requested_field_data
+    
 def add_response_to_db(user_response,reqobj):
     ai_service_db_update_queue = sqs.get_queue_by_name(QueueName=os.environ['AI_SERVICE_DB_UPDATE_QUEUE'])
     
@@ -16,23 +22,39 @@ def add_response_to_db(user_response,reqobj):
     
     que_id = reqobj['queId'] if (reqobj.__contains__('queId')) else ''
     
-    if(user_response['response'].__contains__('ocr')):
-        student_answer_ocr = user_response['response']['ocr'] if (user_response['response']['ocr']!="") else reqobj['questionInfo']['studentAnswer']
-    else:
-        student_answer_ocr = reqobj['questionInfo']['studentAnswer']
+    ## checking and assigning the values from ai response to the variables
+    student_answer_ocr = field_exist_or_not(user_response,reqobj['questionInfo']['studentAnswer'],'ocr')
+    student_answer_maxScore = field_exist_or_not(user_response,1,'maxScore')
+    student_answer_score = field_exist_or_not(user_response,0,'score')
+    student_answer_aiFeedback = field_exist_or_not(user_response,'','aiFeedback')
     
+    ## desciding the flags value based on the score and maxScore
+    if(student_answer_score==student_answer_maxScore):
+        student_answer_correct_flag = True
+    elif(student_answer_score<student_answer_maxScore and student_answer_score>0):
+        student_answer_correct_flag = False
+    
+    if(student_answer_ocr==''):
+        student_answer_empty_flag = True
+    else:
+        student_answer_empty_flag = False
+        
+    ## creating data to send to queue
     reqobj_to_update = {
-        'key_value_pair_to_update_data':{'aiFeedback':user_response['response']['aiFeedback'],
-                                'score':user_response['response']['score'],
+        'key_value_pair_to_update_data':{'aiFeedback':student_answer_aiFeedback,
+                                'score':student_answer_score,
                                 'studentAnswer':student_answer_ocr,
+                                'isCorrect':student_answer_correct_flag,
+                                'isBlank':student_answer_empty_flag,
                                 'status':'processed',
                                 },
         'key_value_pair_to_filter_data':{'studentId':student_id,'scanId':scan_id,'queId':que_id},
         'usage':'updateData'
     }
     
+    # sending the data to queue
     response_flag = ai_service_db_update_queue.send_message(MessageBody=json.dumps(reqobj_to_update))
-    # print("update is deployed...")
+
     return response_flag
 
 def convert_rubric_to_string(rubric_json):
