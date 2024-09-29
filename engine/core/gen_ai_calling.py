@@ -4,7 +4,7 @@ import replicate
 import google.generativeai as genai
 
 from engine.core.llm_calling import calude_calling, gpt_calling, gpt_vision_calling
-from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gpt, convert_normal_to_gpt_vision
+from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gpt
 from engine.gen_utils_files.utils import convert_rubric_to_string, find_data_in_string, mapping_model_with_name
 
 llm_name_mapping = {
@@ -75,6 +75,8 @@ def gen_ai_calling_proxy(reqobj):
         model_name_sample = "gpt-4-latest"
     elif(grading_prompt=='ocr' or grading_prompt=='OCR'):
         model_name_sample = "gpt-ocr-vision"
+    elif(grading_prompt=='shozemi-ocr'):
+        model_name_sample = "shozemi-gpt-latest"
     else:
         # model_name_sample = reqobj['modelName'] if(reqobj.__contains__('modelName')) else "claude-latest"
         model_name_sample = reqobj['modelName'] if(reqobj['modelName']!='') else "gpt-4-latest"
