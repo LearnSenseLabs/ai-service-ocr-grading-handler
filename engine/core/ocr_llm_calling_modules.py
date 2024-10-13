@@ -56,17 +56,20 @@ def claude_vision_calling(user_image,system_prompt,model_name="claude-3-5-sonnet
     message = client.messages.create(
         model=model_name,
         max_tokens=1000,
-        temperature=0.1,
+        temperature=0,
         system=reqobj_claude["systemPrompt"],
         messages=messages_ocr,
     )
     
     if message.content:
         claude_json_response = find_data_in_string(message.content[0].text,"claude-json")
-        claude_response = json.loads(claude_json_response)
-
-        claude_response['score'] = float(claude_response['score'])
-        claude_response['maxScore'] = float(claude_response['maxScore'])
+        # claude_response = json.loads(claude_json_response)
+        if(isinstance(claude_json_response,str)):
+            claude_response = claude_json_response
+        else:
+            claude_response = json.loads(claude_json_response)
+        # claude_response['score'] = float(claude_response['score'])
+        # claude_response['maxScore'] = float(claude_response['maxScore'])
         claude_statusCode = 200
     else:
         response = {"ocr": ""}

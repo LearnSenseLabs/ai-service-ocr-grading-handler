@@ -1,5 +1,7 @@
 import base64,httpx
 
+from engine.gen_utils_files.utils import encode_image
+
 def convert_normal_to_gpt(message):
     updated_gpt_data = []
     
@@ -23,7 +25,7 @@ def convert_normal_to_gpt(message):
             "content": str("question: "+message['question'])
         })
     # if(message.__contains__('answer')):
-    if(message.__contains__('studentAnswer')):
+    if(message.__contains__('studentAnswer') or message.__contains__('answer')):
         updated_gpt_data.append({
             "role": "user",
             "content": str("studentAnswer: "+str(message['answer'])) if(str(message['answer'])!="") else "No Answer"
@@ -114,7 +116,7 @@ def convert_normal_to_gpt_vision(message,model_class="openai-ocr"):
     #         'type':'image_url',
     #         'image_url':message['answer']
     #     }
-    
+    base64_image = encode_image(message['answerUrl'])
     # if(model_class=="gpt-ocr"):
     if(model_class=="openai-ocr" or model_class=="gpt-ocr"):
     # for message in normal_data:
@@ -129,7 +131,8 @@ def convert_normal_to_gpt_vision(message,model_class="openai-ocr"):
                     {
                         "type":"image_url",
                         # "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
-                        "image_url":{"url":message['answerUrl'] if(isinstance(message['answerUrl'],str)) else ""}
+                        # "image_url":{"url":message['answerUrl'] if(isinstance(message['answerUrl'],str)) else ""}
+                        "image_url":{"url": f"data:image/webp;base64,{base64_image}"}
                     }
                 ]
             })

@@ -1,0 +1,72 @@
+[
+    {
+        "subjectName":"english",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"You are tasked with performing OCR on a provided image of handwritten English text. Your objective is to transcribe every detail of the handwritten text exactly as it appears in the image, without any alterations, additions, or omissions. This includes maintaining the exact spelling, punctuation, and phrasing as written by the student. Exclude any text that is cut out or scribbled out.Do not analyze, interpret, or correct the content in any way.  Provide the transcription in the following format:",
+        "defaultLLM":"gpt-4o"
+    },
+    {
+        "subjectName":"maths",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"You are tasked with ocring a student's response to a Math question. You are provided with the student’s answer image, assess the handwriting in the given image, write what you read in the image as it is, try to keep any mathematical calculations or mathematical symbol as it is, and provide me with just what you see, Provide the response in the following format: ",
+        "defaultLLM":"gpt-4o"
+    },
+    {
+        "subjectName":"science",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"Perform OCR on the provided image containing science-related content. Transcribe all text present in the image exactly as it appears, covering topics such as physics, chemistry, biology, or earth science. Ensure that the output reflects the content precisely as seen in the image. Provide the result in the following format: ",
+        "defaultLLM":"gpt-4o"
+    },
+    {
+        "subjectName":"socialScience",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"You are tasked with performing OCR on a provided image related to Social Science. Your objective is to transcribe all relevant text exactly as it appears, covering topics such as history, geography, economics, political science, and cultural studies. Maintain the exact spelling, punctuation, and phrasing as written. Exclude any text that is cut out or scribbled out. If the image contains diagrams, maps, or illustrations, describe them accurately. Do not analyze, interpret, or correct the content in any way. Provide the transcription in the following format:",
+        "defaultLLM":"gpt-4o"
+    },
+    {
+        "subjectName":"geography",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"",
+        "defaultLLM":"claude-3-5-sonnet-20240620de"
+    },
+    {
+        "subjectName":"physics",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"",
+        "defaultLLM":"claude-3-5-sonnet-20240620"
+    },
+    {
+        "subjectName":"biology",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"",
+        "defaultLLM":"claude-3-5-sonnet-20240620"
+    },
+    {
+        "subjectName":"chemistry",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"",
+        "defaultLLM":"claude-3-5-sonnet-20240620"
+    },
+    {
+        "subjectName":"economics",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"",
+        "defaultLLM":"gpt-4o"
+    },
+    {
+        "subjectName":"accountancy",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"",
+        "defaultLLM":"gpt-4o"
+    }
+]
