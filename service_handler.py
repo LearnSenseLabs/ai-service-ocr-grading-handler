@@ -27,14 +27,17 @@ def message_handler(event, context):
     if (os.environ['cloudWatch'] == "True"):
         print(json.dumps(event))
     # print(context)
-    # if (event.__contains__('requestContext')):
-    #     if (event['requestContext'].__contains__('http')):
-    #         urlpath = event['requestContext']['http']['path']
+    if (event.__contains__('requestContext')):
+        if (event['requestContext'].__contains__('http')):
+            urlpath = event['requestContext']['http']['path']
+        else:
+            urlpath = "/generate"
+    else:
+        urlpath = "/generate"    
 
     # # used for the api gateway
     # if (event.__contains__('path')):
     #     urlpath = event['path']
-    urlpath = "/generate"
     headers = event['headers'] if (event.__contains__('headers')) else ""
     
     # if ('body' in event.keys()):
@@ -47,6 +50,7 @@ def message_handler(event, context):
             reqobj = create_reqobj_scan(headers, event, "json")
             # print("reqobj: ",reqobj)
             response = {}
+            reqobj_task = ''
             ## added support for multiple questions in one request processing like adding loop to process questions one by one...
             for reqobj_question_wise in reqobj:
                 if(os.environ['cloudWatch'] == "True"):
@@ -56,24 +60,43 @@ def message_handler(event, context):
                     print("response: ",response)
                 try:
                     db_add_flag=add_response_to_db(response,reqobj_question_wise)
-                    # print("db_add_flag: ",db_add_flag)
+                    response_message = "question graded and database updated succesfully."
                 except Exception as e:
                     raise Exception("Error in adding response to DB!")
+        elif(urlpath=="/generateQuestion"):
+            reqobj_task = "question_generation"
+            reqobj = create_reqobj_scan(headers, event, reqobj_task)
+            reqobj_userId = reqobj[0]['userId']
+            if(os.environ['cloudWatch'] == "True"):
+                print(reqobj[0])
+            response = gen_ai_calling_proxy(reqobj[0],task='question_generation')
+            response_message = "question generated successfully."
+            
         else:
             raise Exception("Unsupported path!")
-
-        return {
-            "statusCode": 200 if isinstance(response, list) else response['statusCode'],
-            "headers": {"Content-Type": "application/json",
-                        # "Access-Control-Allow-Origin": "*",  # Required for CORS support to work
-                        # Required for cookies, authorization headers with HTTPS
-                        # "Access-Control-Allow-Credentials": True,
-                        # "Access-Control-Allow-Headers": "*",
-                        # "Access-Control-Allow-Methods": "*",  # Allow only GET request
-                        "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
-                        },
-            "body": json.dumps({"feedback":"question graded and database updated succesfully."})
-        }
+        
+        if(reqobj_task=='question_generation'):
+            return {
+                "statusCode": 200 if isinstance(response, list) else response['statusCode'],
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
+                },
+                "body": json.dumps({"feedback":response_message,"userId":reqobj_userId,"generated_questions":response})
+            }
+        else:
+            return {
+                "statusCode": 200 if isinstance(response, list) else response['statusCode'],
+                "headers": {"Content-Type": "application/json",
+                            # "Access-Control-Allow-Origin": "*",  # Required for CORS support to work
+                            # Required for cookies, authorization headers with HTTPS
+                            # "Access-Control-Allow-Credentials": True,
+                            # "Access-Control-Allow-Headers": "*",
+                            # "Access-Control-Allow-Methods": "*",  # Allow only GET request
+                            "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
+                            },
+                "body": json.dumps({"feedback":response_message})
+            }
 
     except Exception as e:
         
@@ -108,19 +131,19 @@ def create_reqobj_scan(headers, body, reqtype):
         reqobj_body = json.loads(body['Records'][0]['body'])
         
         ## to accoumulate multiple questions in one request
-        if(isinstance(reqobj_body, list)):
-            reqobj = reqobj_body
-        else:
-            reqobj = [reqobj_body]
+        
         # reqobj = json.loads(body['Records'][0]['body'])[0]
-    
+    elif(reqtype=="question_generation"):
+        reqobj_body = json.loads(body['body'])
     else:
-
         raise Exception("Invalid request type!")
 
     # if ('scanId' not in reqobj or reqobj['scanId'] == ''):
     #     reqobj['scanId'] = str(uuid.uuid4())
-
+    if(isinstance(reqobj_body, list)):
+        reqobj = reqobj_body
+    else:
+        reqobj = [reqobj_body]
     # reqobj['receivedAt'] = datetime.utcnow().isoformat()
 
     return reqobj
@@ -149,6 +172,52 @@ if __name__ == "__main__":
 #     ]
 # }
 
+#     event = {
+#     "Records": [
+#         {
+#             "messageId": "5415cd1d-6a58-44ff-be2b-6358327a9259",
+#             "receiptHandle": "AQEBWIYAAmYBPJlBZVmldxZ7ZG9h0Or97FnmPApbJpSu08jb8B8xYyWmZANdWVrIR6les3v6vNJGc3F62toUpSYRDLt7qr1ehC3zX6VEKp14aNz4SjBKmXo4kPCEodJDg2GfmCbszJOg5JVGm7Tmee9REPQs7AbwYj9pUX+FTJS3LVKFB8yNOtyFPDQTzrrnZzRuHw/Gnrss8YpsU80aU8KdwmG+Ifo6vFkEv18U9pGqxIGNtChLSF1ccaL4+wtMNY2HDnoFgUPbwdd/O75RkdlCdBZDIBlnSRwaCFVysX2FXQfGfM4Qwv6l4lj3uOG487hvc/v+qXGLJy+9WfDS+i09bEuohyVClkvCaLSSlByqbQOL23F7Zua28cB7tV1pOrXhIvLyePNVltMmiamT188hLDI+Q3JGgpt7Z5y2ZNdEpjo=",
+#             "body": "[{\"modelName\": \"claude-vision-ocr\", \"subject\": \"Mathematics\", \"retryFlag\": \"both\", \"questionInfo\": {\"question\": \"Simplify the expression: (3x + 4)(2x - 5)/(x\\u00b2 - 9)\", \"studentAnswer\": \"{6x^2 - 7x - 20}\", \"rubrics\": [{\"rubricId\": \"L0Bkg3bdyucbZCmDspQyy\", \"score\": 1, \"criteria\": \"1 mark for correctly identifying or factoring x\\u00b2 - 9 as a difference of squares: x\\u00b2 - 9 = (x+3)(x-3)\"}, {\"rubricId\": \"73c3eaa8-6936-4f24-af60-b31559fa6cad\", \"score\": 1, \"criteria\": \"1 mark for correctly expanding the product of the two binomials (3\\ud835\\udc65+4)(2\\ud835\\udc65\\u22125) using the distributive property (FOIL): (3\\ud835\\udc65+4)(2\\ud835\\udc65\\u22125)  = 6x\\u00b2 -15\\ud835\\udc65 +8\\ud835\\udc65 -20 = 6x\\u00b2  - 7\\ud835\\udc65 -20\"}, {\"rubricId\": \"71dbc04d-2c40-409d-b51d-a7366e30ac35\", \"score\": 1, \"criteria\": \"1 mark for dividing the expanded expression (6x\\u00b2  - 7\\ud835\\udc65 -20) with the factored form (x+3)(x-3) and simplifying: (6x\\u00b2  - 7\\ud835\\udc65 -20)/((x+3)(x-3))\"}], \"maxScore\": 3, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/master/67067d2a62458895dc7bc820/N7rQKHDS8H3Hi8dcPyCNH/ans_crop/df0194a7-f3f1-4e25-bacf-03b8c53aa89a.webp\"}, \"gradingPrompt\": \"claude-ocr\", \"status\": \"processing\", \"student_id\": \"WyYdZ1hcGf0moeMpA2Kqm\", \"scan_id\": \"N7rQKHDS8H3Hi8dcPyCNH\", \"que_id\": \"wapb-n7DgS_caZ2zv3lDK\"}]",
+#             "attributes": {
+#                 "ApproximateReceiveCount": "1",
+#                 "AWSTraceHeader": "Root=1-6711edf3-2ee6e6c463011266604c3b43;Parent=3c5daa0344327c88;Sampled=0;Lineage=1:bd4cecd5:0",
+#                 "SentTimestamp": "1729228276043",
+#                 "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+#                 "ApproximateFirstReceiveTimestamp": "1729228276048"
+#             },
+#             "messageAttributes": {},
+#             "md5OfBody": "995d2c9d536320e1de0c99a96bd36cd1",
+#             "eventSource": "aws:sqs",
+#             "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-prod-new",
+#             "awsRegion": "ap-south-1"
+#         }
+#     ]
+# }
+
+#     event = {
+#     "Records": [
+#         {
+#             "messageId": "eb04aca5-f29f-4e86-aee8-7d052038aff1",
+#             "receiptHandle": "AQEBnXab0ab/b9JsrFvvX/HQELDTIaP2VqMx9y2opzHF5ZQdW48uJE9CaYvWwjJLMLY+mlBl1cLQni/knWNz61UdeG4+LMA3bfI7STRIzOUI6TJGNsrVmIUNY6rDFsSfyvEWrFQgjvxpYFZNLWoqqtY4aNpX2zFZjJxOXO8gSRLAl91AKM6aO9KsUAHQ76SUtcvIxP+IzgdS1dNvnmM6TJhnjDokbHvwHXkTLuHD8xXDCR76rftY3joms0rI7QgDFF6O6vKwFN6EuYB4MQrD/okZpbUhpkk07MYd10SAi8nvneu0wagpyuZBCY/ejLd8Db02KpJkuJM08Gxbdw87/dn8uihcnbFb3ktiCwtpE2YzlsqscjUDglUt8nnk8CMkjWNEjDxFia/sK+Af4JP6DThpa5wAPoTrdUSnFpayUa+7lWA=",
+#             "body": "{\"gradeLevel\": \"grade1\", \"subject\": \"Mathematics\", \"educationBoard\": \"ICSE\", \"topic\": \"addition\", \"numberOfQuestions\": 5, \"userId\": \"66d176665d3a75527a7a161e\", \"contentType\": [\"mcq\", \"openEnded\"], \"task\": \"question_generation\"}",
+#             "attributes": {
+#                 "ApproximateReceiveCount": "1",
+#                 "AWSTraceHeader": "Root=1-67167bd7-7d9ecdf7202d31d70faa2a4d;Parent=5e079745d0b540ce;Sampled=0;Lineage=1:b8702b44:0",
+#                 "SentTimestamp": "1729526745509",
+#                 "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+#                 "ApproximateFirstReceiveTimestamp": "1729526745514"
+#             },
+#             "messageAttributes": {},
+#             "md5OfBody": "f7261b111da7a2a27f610a34b91fa453",
+#             "eventSource": "aws:sqs",
+#             "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-prod-new",
+#             "awsRegion": "ap-south-1"
+#         }
+#     ]
+# }
+
+
+    # event = {'version': '2.0', 'routeKey': '$default', 'rawPath': '/generate', 'rawQueryString': '', 'headers': {'content-length': '248', 'x-amzn-tls-version': 'TLSv1.3', 'x-forwarded-proto': 'https', 'postman-token': 'b75d5d36-8cbc-4d41-8206-a012f1898701', 'x-forwarded-port': '443', 'x-forwarded-for': '43.241.194.3', 'accept': '*/*', 'x-amzn-tls-cipher-suite': 'TLS_AES_128_GCM_SHA256', 'x-amzn-trace-id': 'Root=1-67176cb2-1e55a5824575d3c109a08ae3', 'host': '4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws', 'content-type': 'application/json', 'cache-control': 'no-cache', 'accept-encoding': 'gzip, deflate, br', 'user-agent': 'PostmanRuntime/7.37.3'}, 'requestContext': {'accountId': 'anonymous', 'apiId': '4bf5c7dxjn3e3e6wrgxbypjexu0acnjw', 'domainName': '4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws', 'domainPrefix': '4bf5c7dxjn3e3e6wrgxbypjexu0acnjw', 'http': {'method': 'POST', 'path': '/generateQuestion', 'protocol': 'HTTP/1.1', 'sourceIp': '43.241.194.3', 'userAgent': 'PostmanRuntime/7.37.3'}, 'requestId': '62598eee-43ee-4780-b27a-2b2933192a0a', 'routeKey': '$default', 'stage': '$default', 'time': '22/Oct/2024:09:13:22 +0000', 'timeEpoch': 1729588402257}, 'body': '{\n    "gradeLevel": "grade6",\n    "subject": "Mathematics",\n    "educationBoard": "ICSE",\n    "topic": "addition",\n    "numberOfQuestions": 5,\n    "userId": "66d176665d3a75527a7a161e",\n    "contentType": [\n        "mcq",\n        "openEnded"\n    ]\n}', 'isBase64Encoded': False}
     event = {}
     context = {}
     result = message_handler(event=event, context=context)

@@ -1,5 +1,6 @@
 import base64
 import json,re,os,boto3
+import uuid
 import httpx
 
 sqs = boto3.resource('sqs',
@@ -7,6 +8,11 @@ sqs = boto3.resource('sqs',
                      aws_secret_access_key=os.environ['USER_SECRET_ACCESS_KEY'],
                      region_name="ap-south-1"
                      )
+s3 = boto3.client('s3',
+                  aws_access_key_id=os.environ['USER_ACCESS_KEY_ID'],
+                  aws_secret_access_key=os.environ['USER_SECRET_ACCESS_KEY'],
+                  region_name="ap-south-1")
+
 def field_exist_or_not(user_response,default_response,field_to_check):
     if(user_response['response'].__contains__(field_to_check)):
         requested_field_data = user_response['response'][field_to_check] if (user_response['response'][field_to_check]!="") else default_response
@@ -37,9 +43,38 @@ def get_prompt(task, subject_name, prompts_json_data):
 # def get_prompt(task, subject_name, prompts_dict):
 #     return prompts_dict.get((task, subject_name.lower()), "No prompt found for the given task and subject name.")
 
+def json_s3_uploads(user_id, json_data):
 
-def add_response_to_db(user_response,reqobj):
+    res_url = []
+    s3_bucket_name = 'open-crops-smartpaper'
+    # overriding file name
+    file_name = str(uuid.uuid4())
+
+    file_name = str(file_name)
+    content_type = 'application/json'
+    s3_key = 'dev'+ "/" + user_id + "/" + file_name +".json"
+    response = s3.put_object(Body=json_data,Bucket=s3_bucket_name, Key=s3_key, ACL='public-read', ContentType=content_type)
+
+    s3_url = "https://"+s3_bucket_name+".s3.ap-south-1.amazonaws.com/"+s3_key
+    # res_url.append(s3_url)
+    return s3_url
+
+def convert_to_add_data_format(user_id,question_json):
+    response = []
+    response.append({
+        "user_id":user_id,
+        "question_json_url":json_s3_uploads(user_id,question_json),
+        "usage":"insertData"
+    })
+    return response
+
+def add_response_to_db(user_response,reqobj,task=''):
     ai_service_db_update_queue = sqs.get_queue_by_name(QueueName=os.environ['AI_SERVICE_DB_UPDATE_QUEUE'])
+
+    if(task=="question_generation"):
+        response_to_add_in_queue=convert_to_add_data_format(user_id=reqobj['userId'],question_json=json.dumps(user_response))
+        response_flag = ai_service_db_update_queue.send_message(MessageBody=json.dumps(response_to_add_in_queue))
+        return response_flag
     
     ## add test case for checking studentId,scanId,queId exist or not.
     student_id = reqobj['studentId'] if (reqobj.__contains__('studentId')) else reqobj['student_id'] if(reqobj.__contains__('student_id')) else ''

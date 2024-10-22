@@ -6,6 +6,7 @@ import google.generativeai as genai
 from engine.core.llm_calling import calude_calling, gpt_calling, gpt_vision_calling
 from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gpt
 from engine.core.ocr_llm_calling_modules import claude_vision_calling
+from engine.core.question_generation_handler import convert_question_format, question_generation
 from engine.gen_utils_files.utils import convert_rubric_to_string, find_data_in_string, get_prompt, mapping_model_with_name
 
 llm_name_mapping = {
@@ -72,8 +73,12 @@ def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instru
         # "answer":studentAnswer+",  Please use this Scoring criteria to give a response in Json Format of : "+scoring_criteria
     }
     
-def gen_ai_calling_proxy(reqobj):
+def gen_ai_calling_proxy(reqobj,task=''):
     # model = "gpt-4o"
+    if(task=='question_generation'):
+        question_json=question_generation(reqobj)
+        return convert_question_format(question_json)
+        
     grading_prompt = reqobj['gradingPrompt'] if(reqobj.__contains__('gradingPrompt')) else 'default'
     if(grading_prompt=='expository-essay-ocr'):
         # model_name_sample = "gpt-vision-mcq"
@@ -90,7 +95,7 @@ def gen_ai_calling_proxy(reqobj):
         model_name_sample = reqobj['modelName'] if(reqobj['modelName']!='') else "gpt-4-latest"
     # model_name_sample = os.environ['modelName'] if(os.environ['modelName']!='') else reqobj['modelName']
     
-    subject_name = reqobj['subject'] if(reqobj.__contains__('subject')) else ""
+    subject_name = reqobj['subject'] if(reqobj.__contains__('subject')) else "english"
         
     model_data_json=mapping_model_with_name(model_name_sample,llm_name_mapping)
     model_name = model_data_json['modelName']
@@ -131,8 +136,23 @@ def gen_ai_calling_proxy(reqobj):
             system_instruction = "You will read the handwritting in the given image, write what you read in the image as it is, "
             scoring_criteria = " give it in the string format as value"
         elif(model_class=='claudeVisionOCR'):
-            system_instruction = "You will read the handwriting in the given image, write what you read in the image as it is, and if you find any non-text elements, describe them briefly and start that description as a figure Description: also follow the order(try to keep description of the figure at the place which is in the original image) of text and nontext shown in the given image,"
-            scoring_criteria = " give it in the string format without any pretext, provide just the value PS: don't give the figure description at the bottom, give it at the place where it is drawn in the original image, PS: Pay particular attention to fractions and other notations that span multiple lines. Ensure fractions are transcribed accurately, even if they appear on lined paper. For instance, transcribe a fraction that appears as a numerator on one line and a denominator on the next line as numerator/denominator within the text."
+            
+            
+            with open("engine/gen_utils_files/subject_wise_prompt.json", 'r') as file:
+                prompts = json.load(file)
+            system_instruction = get_prompt(task="ocr",subject_name=subject_name,prompts_json_data=prompts)
+            if(system_instruction==""):
+                system_instruction = "You will transcribe the English handwriting in the provided image exactly as it is written, without any modifications, corrections, or interpretations. The students are of a younger age and studying in Gujarat state. Keep the original structure, including all punctuation, capitalization, and line breaks, without altering any names, dates, or terms. If there are any non-text elements such as underlines, symbols, or figures, describe them briefly starting with Non-text element: in their respective position. Provide the output as a plain string, with no extra explanations or formatting, maintaining the exact order and structure of the text as it appears in the image. give it in the string format without any pretext, provide just the value"
+            scoring_criteria = '.'
+            # scoring_criteria = " give it in the string format without any pretext, provide just the value"
+                        
+            ## updated prompt on oct-16-2024
+            # system_instruction = "You will transcribe the English handwriting in the provided image exactly as it is written, without any modifications, corrections, or interpretations. The students are of a younger age and studying in Gujarat state. Keep the original structure, including all punctuation, capitalization, and line breaks, without altering any names, dates, or terms. If there are any non-text elements such as underlines, symbols, or figures, describe them briefly starting with Non-text element: in their respective position. Provide the output as a plain string, with no extra explanations or formatting, maintaining the exact order and structure of the text as it appears in the image."
+            # scoring_criteria = ""
+            # scoring_criteria = " give it in the string format without any pretext, provide just the value PS: don't give the figure description at the bottom, give it at the place where it is drawn in the original image, PS: Pay particular attention to fractions and other notations that span multiple lines. Ensure fractions are transcribed accurately, even if they appear on lined paper. For instance, transcribe a fraction that appears as a numerator on one line and a denominator on the next line as numerator/denominator within the text."
+                        
+            # system_instruction = "You will read the handwriting in the given image, write what you read in the image as it is,consider handwritting is of small students from gujarat with english as secondary langauge and if you find any non-text elements, describe them briefly and start that description as a figure Description: also follow the order(try to keep description of the figure at the place which is in the original image) of text and nontext shown in the given image,"
+            # scoring_criteria = " give it in the string format without any pretext, provide just the value PS: don't give the figure description at the bottom, give it at the place where it is drawn in the original image, PS: Pay particular attention to fractions and other notations that span multiple lines. Ensure fractions are transcribed accurately, even if they appear on lined paper. For instance, transcribe a fraction that appears as a numerator on one line and a denominator on the next line as numerator/denominator within the text."
             # system_instruction = "Extract the handwritten text and describe any diagrams or figures in the image, removing any unnecessary introductory or explanatory phrases. Focus only on transcribing the actual content of the image. Omit any introductory or descriptive phrases that are not part of the original handwritten content, focusing solely on the text and figures as they appear in the image. Transcribe the text exactly as it appears, maintaining its original format, punctuation, and handwriting differences. Additionally, describe in detail any non-text elements, such as geometric shapes, diagrams, or chemical compounds. For figures, identify and describe the type (e.g., circle, triangle, chemical structure), noting any visible labels, dimensions, bonds, or structural arrangements. Ensure that both text and figure details are captured accurately without making any interpretations or corrections to the handwritten content."
         elif(model_class=='gptVisionMCQ'):
             system_instruction = "You are checking multiple choice questions and give me which option is ticked by the user, give me just the option that the user has marked"

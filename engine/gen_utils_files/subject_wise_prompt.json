@@ -1,16 +1,23 @@
 [
     {
-        "subjectName":"english",
+        "subjectName":"English",
         "subjectId":1,
         "task":"ocr",
-        "promptText":"You are tasked with performing OCR on a provided image of handwritten English text. Your objective is to transcribe every detail of the handwritten text exactly as it appears in the image, without any alterations, additions, or omissions. This includes maintaining the exact spelling, punctuation, and phrasing as written by the student. Exclude any text that is cut out or scribbled out.Do not analyze, interpret, or correct the content in any way.  Provide the transcription in the following format:",
+        "promptText":"You will read the handwriting in the given image, write what you read in the image as it is,consider handwritting is of young students from gujarat with english as secondary langauge,and if image is empty then return empty string as '', give it in the string format without any pretext, provide just the value",
         "defaultLLM":"gpt-4o"
     },
     {
-        "subjectName":"maths",
+        "subjectName":"Mathematics",
         "subjectId":1,
         "task":"ocr",
-        "promptText":"You are tasked with ocring a student's response to a Math question. You are provided with the student’s answer image, assess the handwriting in the given image, write what you read in the image as it is, try to keep any mathematical calculations or mathematical symbol as it is, and provide me with just what you see, Provide the response in the following format: ",
+        "promptText":"Read the handwriting in the given image, transcribing the text exactly as it appears Do proper OCR. For mathematical expressions, calculations, formulas, and fractions, transcribe them into proper LaTeX format, ensuring that each expression is enclosed in dollar signs $...$ for inline expressions and $$...$$ for block-level equations (e.g., use $frac{numerator}{denominator}$ for fractions, $^$ for exponents, and $sqrt{...}$ for square roots). Maintain the order and structure of the text exactly as it appears, including punctuation, capitalizations, and spacing. For any non-text elements such as circles, arrows, or lines, briefly describe them using 'Figure Description:' and place the description in the exact position relative to the text as it appears in the image. If multiple mathematical expressions appear in sequence, ensure each is wrapped in its own pair of dollar signs. Return the output as a string formatted with LaTeX for all mathematical content and verbatim transcription for non-mathematical text. Ensure proper punctuation within and around mathematical expressions. Do not correct or modify any part of the text or symbols, even if they contain apparent errors. Do not give any introductory statements, give me the latex format only",
+        "defaultLLM":"gpt-4o"
+    },
+    {
+        "subjectName":"mathematics",
+        "subjectId":1,
+        "task":"ocr",
+        "promptText":"Read the handwriting in the given image, transcribing the text exactly as it appears Do proper OCR. For mathematical expressions, calculations, formulas, and fractions, transcribe them into proper LaTeX format, ensuring that each expression is enclosed in dollar signs $...$ for inline expressions and $$...$$ for block-level equations (e.g., use $frac{numerator}{denominator}$ for fractions, $^$ for exponents, and $sqrt{...}$ for square roots). Maintain the order and structure of the text exactly as it appears, including punctuation, capitalizations, and spacing. For any non-text elements such as circles, arrows, or lines, briefly describe them using 'Figure Description:' and place the description in the exact position relative to the text as it appears in the image. If multiple mathematical expressions appear in sequence, ensure each is wrapped in its own pair of dollar signs. Return the output as a string formatted with LaTeX for all mathematical content and verbatim transcription for non-mathematical text. Ensure proper punctuation within and around mathematical expressions. Do not correct or modify any part of the text or symbols, even if they contain apparent errors. Do not give any introductory statements, give me the latex format only",
         "defaultLLM":"gpt-4o"
     },
     {

@@ -62,8 +62,9 @@ def claude_vision_calling(user_image,system_prompt,model_name="claude-3-5-sonnet
     )
     
     if message.content:
-        claude_json_response = find_data_in_string(message.content[0].text,"claude-json")
+        # claude_json_response = find_data_in_string(message.content[0].text,"claude-json")
         # claude_response = json.loads(claude_json_response)
+        claude_json_response = message.content[0].text
         if(isinstance(claude_json_response,str)):
             claude_response = claude_json_response
         else:

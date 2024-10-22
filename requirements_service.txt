@@ -6,3 +6,4 @@ openai
 anthropic
 google-generativeai
 replicate
+nanoid
