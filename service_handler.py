@@ -1,6 +1,7 @@
 # from dotenv import load_dotenv
 # load_dotenv(".env.dev")
 
+from engine.core.question_generation_handler import credit_reducer
 import uuid,os,json
 # from datetime import datetime
 
@@ -70,7 +71,8 @@ def message_handler(event, context):
             if(os.environ['cloudWatch'] == "True"):
                 print(reqobj[0])
             response = gen_ai_calling_proxy(reqobj[0],task='question_generation')
-            response_message = "question generated successfully."
+            response_message = credit_reducer(reqobj_userId,response)
+            # response_message = "question generated successfully."
             
         else:
             raise Exception("Unsupported path!")
@@ -82,7 +84,7 @@ def message_handler(event, context):
                     "Content-Type": "application/json",
                     "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
                 },
-                "body": json.dumps({"feedback":response_message,"userId":reqobj_userId,"generated_questions":response})
+                "body": json.dumps({"feedback":response_message,"status":True,"generated_questions":response})
             }
         else:
             return {
@@ -218,6 +220,56 @@ if __name__ == "__main__":
 
 
     # event = {'version': '2.0', 'routeKey': '$default', 'rawPath': '/generate', 'rawQueryString': '', 'headers': {'content-length': '248', 'x-amzn-tls-version': 'TLSv1.3', 'x-forwarded-proto': 'https', 'postman-token': 'b75d5d36-8cbc-4d41-8206-a012f1898701', 'x-forwarded-port': '443', 'x-forwarded-for': '43.241.194.3', 'accept': '*/*', 'x-amzn-tls-cipher-suite': 'TLS_AES_128_GCM_SHA256', 'x-amzn-trace-id': 'Root=1-67176cb2-1e55a5824575d3c109a08ae3', 'host': '4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws', 'content-type': 'application/json', 'cache-control': 'no-cache', 'accept-encoding': 'gzip, deflate, br', 'user-agent': 'PostmanRuntime/7.37.3'}, 'requestContext': {'accountId': 'anonymous', 'apiId': '4bf5c7dxjn3e3e6wrgxbypjexu0acnjw', 'domainName': '4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws', 'domainPrefix': '4bf5c7dxjn3e3e6wrgxbypjexu0acnjw', 'http': {'method': 'POST', 'path': '/generateQuestion', 'protocol': 'HTTP/1.1', 'sourceIp': '43.241.194.3', 'userAgent': 'PostmanRuntime/7.37.3'}, 'requestId': '62598eee-43ee-4780-b27a-2b2933192a0a', 'routeKey': '$default', 'stage': '$default', 'time': '22/Oct/2024:09:13:22 +0000', 'timeEpoch': 1729588402257}, 'body': '{\n    "gradeLevel": "grade6",\n    "subject": "Mathematics",\n    "educationBoard": "ICSE",\n    "topic": "addition",\n    "numberOfQuestions": 5,\n    "userId": "66d176665d3a75527a7a161e",\n    "contentType": [\n        "mcq",\n        "openEnded"\n    ]\n}', 'isBase64Encoded': False}
+#     event = {
+#     "version": "2.0",
+#     "routeKey": "$default",
+#     "rawPath": "/generateQuestion",
+#     "rawQueryString": "",
+#     "headers": {
+#         "sec-fetch-mode": "cors",
+#         "referer": "https://web.smartpaperapp.com/",
+#         "content-length": "212",
+#         "x-amzn-tls-version": "TLSv1.3",
+#         "sec-fetch-site": "cross-site",
+#         "x-forwarded-proto": "https",
+#         "accept-language": "en-GB,en;q=0.9",
+#         "origin": "https://web.smartpaperapp.com",
+#         "x-forwarded-port": "443",
+#         "x-forwarded-for": "43.241.194.168",
+#         "accept": "application/json, text/plain, */*",
+#         "x-amzn-tls-cipher-suite": "TLS_AES_128_GCM_SHA256",
+#         "sec-ch-ua": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
+#         "x-amzn-trace-id": "Root=1-671d2347-311e66477e51d005528fdd92",
+#         "sec-ch-ua-mobile": "?0",
+#         "sec-ch-ua-platform": "\"Linux\"",
+#         "host": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws",
+#         "content-type": "application/json",
+#         "accept-encoding": "gzip, deflate, br, zstd",
+#         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+#         "sec-fetch-dest": "empty"
+#     },
+#     "requestContext": {
+#         "accountId": "anonymous",
+#         "apiId": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw",
+#         "domainName": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws",
+#         "domainPrefix": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw",
+#         "http": {
+#             "method": "POST",
+#             "path": "/generateQuestion",
+#             "protocol": "HTTP/1.1",
+#             "sourceIp": "43.241.194.168",
+#             "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+#         },
+#         "requestId": "bd3185df-19b5-405a-956d-c05be89e6084",
+#         "routeKey": "$default",
+#         "stage": "$default",
+#         "time": "26/Oct/2024:17:13:43 +0000",
+#         "timeEpoch": 1729962823787
+#     },
+#     "body": "{\"gradeLevel\":\"grade7\",\"subject\":\"Mathematics\",\"educationBoard\":\"CBSE\",\"topic\":\"Probabilty\",\"numberOfQuestions\":5,\"mcq\":true,\"openEnded\":true,\"userId\":\"66d176665d3a75527a7a161e\",\"contentType\":[\"mcq\",\"openEnded\"]}",
+#     "isBase64Encoded": False
+# }
+
     event = {}
     context = {}
     result = message_handler(event=event, context=context)
