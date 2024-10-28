@@ -7,3 +7,4 @@ anthropic
 google-generativeai
 replicate
 nanoid
+pymongo
