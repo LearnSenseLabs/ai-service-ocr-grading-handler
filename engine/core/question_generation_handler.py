@@ -5,6 +5,8 @@ from typing import List, Dict, Any
 from nanoid import generate
 import anthropic
 
+from engine.gen_utils_files.database_calling import get_user_metadata_from_mongo, updated_userDB_monogo
+
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -75,6 +77,8 @@ def question_generation(input_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         topic = input_data.get('topic')
         num_questions = input_data.get('numberOfQuestions', 5)
         content_types = input_data.get('contentType', ['mcq', 'openEnded'])
+        content_types_str_value = ', '.join(['Multiple choice question' if item == 'mcq' else item for item in content_types])
+
         age_range = calculate_age_range(grade_level)
         
         # Validate input
@@ -92,11 +96,12 @@ def question_generation(input_data: Dict[str, Any]) -> List[Dict[str, Any]]:
                         f"Variety of Topics: Ensure that the questions cover all major topics from the grade {grade_level}-{subject} syllabus, including given topics of {topic}."                         
                         f"Difficulty Level: The questions should be appropriately challenging for grade-{grade_level} students, balancing between conceptual understanding and practical application. Clarity and Simplicity: Use simple language and clear instructions, making sure each question is easy to understand for {age_range} year-old students."
                         f"Engagement: Where possible, make the questions interesting and engaging by incorporating real-life scenarios, experiments, or fun elements to stimulate curiosity and interest in the subject."                        
-                        f"Diverse Formats: Include a mix of multiple-choice questions with four options and short answer questions."
+                        # f"Useabl Formats: Include a mix of multiple-choice questions with four options and short answer questions."
+                        f"Useable Formats: Give only this type: {content_types_str_value} of the questions while generating while generating questions."
                         f"options generation: Generate four options for multiple-choice questions, make each option different from others, in this JSON format:{{'opt1':'option-1', 'opt2':'option2', 'opt3':'option3', 'opt4':'option4'}}, in case of short answer give option field as {{[]}}."
                         f"Rubric generation: Generate a detailed rubric for the following question based on the provided topic, skill, question type, and marks. The rubric should be specific, concise, and divided into categories according to the total marks available. provide one clear and specific line that describes what is required to earn that score. Ensure the rubric covers all key aspects of the answer, including accuracy, completeness, and understanding of the concept, do not generate rubrics for multiple-choice questions just give {{[]}}, give me in this form, and do not provide a 0 mark rubric text. Based on the provided image, create rubrics for the given science question and its associated marks. The rubric should be structured as JSON objects with the following structure: {{'RubricText': Text of the rubrics, 'Marks': marks awarded for following these particular rubrics in multiple of 0.5}} "
                         f"Ensure the rubrics align closely with the skill and topic presented in the image. The rubric should be precise, specific to the question, and not overly detailed."                                                                        
-                        f"Format: Provide the questions in a JSON format with the following keys: Grade, Subject, Topic, Question, Question Type, Marks, Answer, Rubrics, options."
+                        f"Format: Provide the questions in a JSON format with the following keys: Grade, Subject, Topic, Question, questionType, Marks, Answer, Rubrics, options."
                         f"Make sure the set does not contain more than {5} questions, covering all the listed topics comprehensively.")
 
         # Call Claude API
@@ -178,40 +183,54 @@ def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, A
             "lineSpacing": 20,
             "lineColor": '#828282',
             "aiGrading": True,
-            "size": '1/16',
+            "size": '1/8',
             "questionId": generate(),
             "answerBoxId": generate(), 
             "settings": 4
         }
+        try:
+            if(que_wise_data.__contains__('Question Type')):
+                generated_question_type = que_wise_data["Question Type"].lower()
+            elif(que_wise_data.__contains__('QuestionType')):
+                generated_question_type = que_wise_data["QuestionType"].lower()
+            elif(que_wise_data.__contains__('questionType')):
+                generated_question_type = que_wise_data["questionType"].lower()
+            else:
+                generated_question_type = ''
+                
+            if generated_question_type == "mcq" or generated_question_type == "multiple choice" or generated_question_type=="multiple choice question":
+                new_que_wise_data["contentSubType"] = "multipleChoice"
+                new_que_wise_data["contentSubSubType"] = "tickmark"
+                
+                option_index = 0
+                new_que_wise_data["options"] = []
+                # for options_data in q['options']:
+                for key, value in que_wise_data['options'].items():
+                    new_que_wise_data["options"].append({
+                        "value": value,
+                        "correctOption":str(option_index) if value == que_wise_data["Answer"] else "",
+                        "optionId": generate()
+                    })
+                    option_index +=1
+                new_que_wise_data['rubrics'] = que_wise_data['Rubrics']
+                new_que_wise_data["ans"] = que_wise_data["Answer"]
+            else:
+                new_que_wise_data['rubrics'] = []
+                for rubrics_data in que_wise_data['Rubrics']:
+                    new_que_wise_data["rubrics"].append({
+                        "score": rubrics_data['Marks'],
+                        "criteria": rubrics_data['RubricText'],
+                        "rubricId": generate()
+                    })
+                
+                new_que_wise_data["contentSubType"] = "openEnded"
+                new_que_wise_data["contentSubSubType"] = "shortAnswer"
 
-        if que_wise_data["Question Type"].lower() == "mcq" or que_wise_data["Question Type"].lower() == "multiple choice":
-            new_que_wise_data["contentSubType"] = "multipleChoice"
-            new_que_wise_data["contentSubSubType"] = "tickmark"
-            
-            option_index = 0
-            new_que_wise_data["options"] = []
-            # for options_data in q['options']:
-            for key, value in que_wise_data['options'].items():
-                new_que_wise_data["options"].append({
-                    "value": value,
-                    "correctOption":str(option_index) if value == que_wise_data["Answer"] else "",
-                    "optionId": generate()
-                })
-                option_index +=1
-            new_que_wise_data['rubrics'] = que_wise_data['Rubrics']
-            new_que_wise_data["ans"] = que_wise_data["Answer"]
-        else:
-            new_que_wise_data['rubrics'] = []
-            for rubrics_data in que_wise_data['Rubrics']:
-                new_que_wise_data["rubrics"].append({
-                    "score": rubrics_data['Marks'],
-                    "criteria": rubrics_data['RubricText'],
-                    "rubricId": generate()
-                })
-            
-            new_que_wise_data["contentSubType"] = "openEnded"
-
-        converted_questions.append(new_que_wise_data)
+            converted_questions.append(new_que_wise_data)
+        except Exception as e:
+            logger.error(f"Error in converting question format: {str(e)}")
+            raise
+        
 
     return converted_questions
 
@@ -219,3 +238,14 @@ def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, A
 # with open('question.json', 'r') as file:
 #     json_data = json.load(file)
 # convert_question_format(questions=json_data)
+
+def credit_reducer(user_id,generated_question_list):
+    # number_of_credits_consumed =
+    number_of_questions_generated = len(generated_question_list)
+    user_data_list = get_user_metadata_from_mongo(user_id)
+    
+    if(len(user_data_list)>0):
+        user_data = user_data_list[0]
+        user_data['credits'] = user_data['credits'] - number_of_questions_generated/10
+        updated_userDB_monogo(user_data)
+        return f"question generated successfully, and updated credits to {user_data['credits']} from {user_data['credits'] + number_of_questions_generated/10}"
