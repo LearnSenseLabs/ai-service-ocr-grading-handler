@@ -12,7 +12,7 @@ from engine.gen_utils_files.utils import convert_rubric_to_string, find_data_in_
 llm_name_mapping = {
     "gpt-4-latest": {"modelName":"gpt-4o","modelClass":"gptText"},
     "gpt-3.5-latest":{"modelName":"gpt-3.5-turbo","modelClass":"gptText"},
-    "claude-latest":{"modelName":"claude-3-5-sonnet-20240620","modelClass":"claudeText"},
+    "claude-latest":{"modelName":"claude-3-5-sonnet-20241022","modelClass":"claudeText"},
     "claude-small":{"modelName":"claude-3-haiku-20240229","modelClass":"claudeText"},
     "claude-medium":{"modelName":"claude-3-opus-20240229","modelClass":"claudeText"},
     "gemini-latest":{"modelName":"gemini-1.5-pro","modelClass":"geminiText"},
@@ -77,6 +77,7 @@ def gen_ai_calling_proxy(reqobj,task=''):
     # model = "gpt-4o"
     if(task=='question_generation'):
         question_json=question_generation(reqobj)
+        # print(question_json)
         return convert_question_format(question_json)
         
     grading_prompt = reqobj['gradingPrompt'] if(reqobj.__contains__('gradingPrompt')) else 'default'
@@ -86,6 +87,8 @@ def gen_ai_calling_proxy(reqobj,task=''):
         model_name_sample = "claude-vision-ocr"
     elif(grading_prompt=='ocr' or grading_prompt=='OCR'):
         model_name_sample = "gpt-ocr-vision"
+    elif(grading_prompt=='gpt-grading-only'):
+        model_name_sample = "gpt-4-latest"
     elif(grading_prompt=='claude-ocr'):
         model_name_sample = "claude-vision-ocr"
     elif(grading_prompt=='argumentative-essay-ocr'):
@@ -136,7 +139,6 @@ def gen_ai_calling_proxy(reqobj,task=''):
             system_instruction = "You will read the handwritting in the given image, write what you read in the image as it is, "
             scoring_criteria = " give it in the string format as value"
         elif(model_class=='claudeVisionOCR'):
-            
             
             with open("engine/gen_utils_files/subject_wise_prompt.json", 'r') as file:
                 prompts = json.load(file)
