@@ -186,7 +186,8 @@ def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, A
             "size": '1/8',
             "questionId": generate(),
             "answerBoxId": generate(), 
-            "settings": 4
+            "settings": 4,
+            "markUpFormat":"Text"
         }
         try:
             if(que_wise_data.__contains__('Question Type')):
