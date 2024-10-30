@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import io
 import base64
 
-def latex_to_image(latex_expression, max_width=8, fontsize=16, dpi=200, padding=0.1):
+def latex_to_image_core(latex_expression, max_width=8, fontsize=16, dpi=200, padding=0.1):
     """
     Generate an image from a LaTeX expression and return as base64 string.
     """
@@ -57,13 +57,13 @@ def latex_to_image(latex_expression, max_width=8, fontsize=16, dpi=200, padding=
 
     # Save the figure to a bytes buffer
     buf = io.BytesIO()
-    # plt.savefig(buf, 
-    #             format='png',
-    #             bbox_inches='tight',
-    #             pad_inches=padding,
-    #             facecolor='white',
-    #             edgecolor='none')
-    # plt.close(fig)
+    plt.savefig(buf, 
+                format='png',
+                bbox_inches='tight',
+                pad_inches=padding,
+                facecolor='white',
+                edgecolor='none')
+    plt.close(fig)
     
     # Encode the bytes as base64
     buf.seek(0)
@@ -73,13 +73,13 @@ def latex_to_image(latex_expression, max_width=8, fontsize=16, dpi=200, padding=
     return image_base64
 def latex_to_image_handler(reqobj):
     image_list_to_return = []
-    max_width = reqobj['width']
     for image_in_reqobj in reqobj:
+        max_width = image_in_reqobj['width']
         latex_text = image_in_reqobj['questionText']
         if(image_in_reqobj.__contains__('markupFormat')):
             if(image_in_reqobj['markupFormat']=='latex'):
                 latex_text = image_in_reqobj['questionText']
-                image_base64=latex_to_image(latex_text, max_width, fontsize=16, dpi=200, padding=0.1)
+                image_base64=latex_to_image_core(latex_text, max_width, fontsize=16, dpi=200, padding=0.1)
                 image_in_reqobj['image_base64'] = image_base64
         # image_list_to_return.append({'queId':que_id, 'image_base64':image_base64}) # image_base64
     return reqobj

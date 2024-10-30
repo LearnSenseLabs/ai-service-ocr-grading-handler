@@ -1,9 +1,9 @@
-import requests,json,os
-import anthropic
+import json,os
+import re
 import replicate
 import google.generativeai as genai
 
-from engine.core import latex_to_image
+from engine.core.latex_to_image import latex_to_image_handler
 from engine.core.llm_calling import calude_calling, gpt_calling, gpt_vision_calling
 from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gpt
 from engine.core.ocr_llm_calling_modules import claude_vision_calling
@@ -81,7 +81,7 @@ def gen_ai_calling_proxy(reqobj,task=''):
         # print(question_json)
         return convert_question_format(question_json)
     elif(task=='latex_to_image'):
-        return latex_to_image(reqobj)
+        return latex_to_image_handler(reqobj)
     grading_prompt = reqobj['gradingPrompt'] if(reqobj.__contains__('gradingPrompt')) else 'default'
     if(grading_prompt=='expository-essay-ocr'):
         # model_name_sample = "gpt-vision-mcq"
@@ -144,7 +144,8 @@ def gen_ai_calling_proxy(reqobj,task=''):
             
             with open("engine/gen_utils_files/subject_wise_prompt.json", 'r') as file:
                 prompts = json.load(file)
-            system_instruction = get_prompt(task="ocr",subject_name=subject_name,prompts_json_data=prompts)
+            system_instruction_temp = get_prompt(task="ocr",subject_name=subject_name,prompts_json_data=prompts)
+            system_instruction = re.sub(r"\\\\", r"\\", system_instruction_temp)
             if(system_instruction==""):
                 system_instruction = "You will transcribe the English handwriting in the provided image exactly as it is written, without any modifications, corrections, or interpretations. The students are of a younger age and studying in Gujarat state. Keep the original structure, including all punctuation, capitalization, and line breaks, without altering any names, dates, or terms. If there are any non-text elements such as underlines, symbols, or figures, describe them briefly starting with Non-text element: in their respective position. Provide the output as a plain string, with no extra explanations or formatting, maintaining the exact order and structure of the text as it appears in the image. give it in the string format without any pretext, provide just the value"
             scoring_criteria = '.'
