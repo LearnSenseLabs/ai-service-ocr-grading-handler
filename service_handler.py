@@ -73,7 +73,12 @@ def message_handler(event, context):
             response = gen_ai_calling_proxy(reqobj[0],task='question_generation')
             response_message = credit_reducer(reqobj_userId,response)
             # response_message = "question generated successfully."
-            
+        elif(urlpath=="/latexToImage"):
+            reqobj_task = "latex_to_image"
+            reqobj = create_reqobj_scan(headers, event, reqobj_task)
+            if(os.environ['cloudWatch'] == "True"):
+                print(reqobj[0])
+            response = gen_ai_calling_proxy(reqobj,task=reqobj_task)
         else:
             raise Exception("Unsupported path!")
         
@@ -85,6 +90,15 @@ def message_handler(event, context):
                     "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
                 },
                 "body": json.dumps({"feedback":response_message,"status":True,"generated_questions":response})
+            }
+        elif(reqobj_task=='latex_to_image'):
+            return {
+                "statusCode": 200,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
+                },
+                "body": json.dumps({"response":response})
             }
         else:
             return {
@@ -135,7 +149,7 @@ def create_reqobj_scan(headers, body, reqtype):
         ## to accoumulate multiple questions in one request
         
         # reqobj = json.loads(body['Records'][0]['body'])[0]
-    elif(reqtype=="question_generation"):
+    elif(reqtype=="question_generation" or reqtype=="latex_to_image"):
         reqobj_body = json.loads(body['body'])
     else:
         raise Exception("Invalid request type!")
@@ -269,6 +283,49 @@ if __name__ == "__main__":
 #     "body": "{\"gradeLevel\":\"grade7\",\"subject\":\"Mathematics\",\"educationBoard\":\"CBSE\",\"topic\":\"Probabilty\",\"numberOfQuestions\":5,\"mcq\":true,\"openEnded\":true,\"userId\":\"66d176665d3a75527a7a161e\",\"contentType\":[\"mcq\",\"openEnded\"]}",
 #     "isBase64Encoded": False
 # }
+#     event = {
+#     "version": "2.0",
+#     "routeKey": "$default",
+#     "rawPath": "/latexToImage",
+#     "rawQueryString": "",
+#     "headers": {
+#         "content-length": "263",
+#         "x-amzn-tls-version": "TLSv1.3",
+#         "x-forwarded-proto": "https",
+#         "postman-token": "671e8da0-0a53-4124-afcd-e842a893d3fc",
+#         "x-forwarded-port": "443",
+#         "x-forwarded-for": "43.241.194.168",
+#         "accept": "*/*",
+#         "x-amzn-tls-cipher-suite": "TLS_AES_128_GCM_SHA256",
+#         "x-amzn-trace-id": "Root=1-671fe1a6-1c356b76122244ed569fe31a",
+#         "host": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws",
+#         "content-type": "application/json",
+#         "cache-control": "no-cache",
+#         "accept-encoding": "gzip, deflate, br",
+#         "user-agent": "PostmanRuntime/7.37.3"
+#     },
+#     "requestContext": {
+#         "accountId": "anonymous",
+#         "apiId": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw",
+#         "domainName": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws",
+#         "domainPrefix": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw",
+#         "http": {
+#             "method": "POST",
+#             "path": "/latexToImage",
+#             "protocol": "HTTP/1.1",
+#             "sourceIp": "43.241.194.168",
+#             "userAgent": "PostmanRuntime/7.37.3"
+#         },
+#         "requestId": "f243eb97-085d-4987-9f58-27e4249bd2f8",
+#         "routeKey": "$default",
+#         "stage": "$default",
+#         "time": "28/Oct/2024:19:10:30 +0000",
+#         "timeEpoch": 1730142630294
+#     },
+#     "body": "[{\n    \"queId\":\"demo-queId\",\n    \"questionText\":\"Simplifying numerator: $(3x+4)(2x-5)$    $= 6x^2 + 8x - 15x - 20$ (Applying distributive)    $= 6x^2 - 7x - 20$     $-1$ property)    Simplifying denominator: $(x^2-9)\",\n    \"markupFormat\":\"latex\",\n    \"width\":8\n}]",
+#     "isBase64Encoded": False
+# }
+
 
     event = {}
     context = {}
