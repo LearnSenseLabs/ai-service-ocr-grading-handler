@@ -88,21 +88,43 @@ def question_generation(input_data: Dict[str, Any]) -> List[Dict[str, Any]]:
             raise ValueError("Number of questions must be at least 2")
 
         # Construct the prompt
-        user_prompt = (f"Generate {num_questions} questions about {topic} for {grade_level} {subject} "
-                       f"according to the {education_board} board. ")
+        # user_prompt = (f"Generate {num_questions} questions about {topic} for {grade_level} {subject} "
+        #                f"according to the {education_board} board. ")
+        
+        ##### generated for gpt-40 on nov 12 2024.... #### 
+        user_prompt = f"Generate {num_questions} questions on the topic '{topic}' for grade-{grade_level} students studying {subject} under the {education_board} curriculum. Only include {content_types_str_value} questions."
+        system_prompt = (
+        f"You are a teacher creating a set of questions for grade-{grade_level} students based on the {education_board} curriculum. "
+        f"The questions should cover a variety of topics relevant to the syllabus and should be appropriate for {age_range} year old students. "
+        f"Requirements: "
+        f"Variety of Topics: Ensure that the questions cover all major topics from the grade {grade_level}-{subject} syllabus, including given topics of {topic}. "
+        f"Difficulty Level: The questions should be appropriately challenging for grade-{grade_level} students, balancing between conceptual understanding and practical application. "
+        f"Clarity and Simplicity: Use simple language and clear instructions, making sure each question is easy to understand for {age_range} year-old students. "
+        f"Engagement: Where possible, make the questions interesting and engaging by incorporating real-life scenarios, experiments, or fun elements to stimulate curiosity and interest in the subject. "
+        f"Useable Formats: Only include {content_types_str_value} questions."
+        f"Options Generation: Generate four options for multiple-choice questions in JSON format {{'opt1':'option1', 'opt2':'option2', 'opt3':'option3', 'opt4':'option4'}}. For short answer questions, leave the options as an empty list {{[]}}. "
+        #f"Rubric Generation: Generate a detailed rubric for each question based on the provided topic, skill, question type, and marks. The rubric should be concise, divided by mark increments of 0.5, and not overly detailed. "
+        f"Rubric Generation: For non-MCQ questions, generate a concise rubric based on the topic, skill, question type, and assigned marks. The rubric should exclude any 0-mark criteria, starting with 0.5 marks or its multiples, and should be brief, with increments of 0.5 marks for each level. Do not generate a rubric for MCQ-type questions."
+        f"Format: Provide the questions in JSON format with keys: Grade, Subject, Topic, Question, questionType, Marks, Answer, Rubrics, options. "
+        f"LaTeX Format: Format the questions in LaTeX code, using LaTeX syntax for any mathematical symbols, equations, or special characters."
+        "For mathematical expressions, formulas, and fractions, give them into proper LaTeX format, ensuring that each expression is enclosed in dollar signs $...$ for inline expressions and $$...$$ for block-level equations (e.g., use only one single backslash like $\frac{numerator}{denominator}$ for fractions, $^$ for exponents, and $\sqrt{...}$ for square roots)."
+        f"Limit the set to {num_questions} questions, covering the topics comprehensively."
+        f"Only include {content_types_str_value} questions." 
+    )
 
-        system_prompt = (f"You are a teacher creating a set of questions for grade-{grade_level} students based on the {education_board} curriculum. The questions should cover a variety of topics relevant to the syllabus and should be appropriate for {age_range} year old students."
-                        f"Requirements: "
-                        f"Variety of Topics: Ensure that the questions cover all major topics from the grade {grade_level}-{subject} syllabus, including given topics of {topic}."                         
-                        f"Difficulty Level: The questions should be appropriately challenging for grade-{grade_level} students, balancing between conceptual understanding and practical application. Clarity and Simplicity: Use simple language and clear instructions, making sure each question is easy to understand for {age_range} year-old students."
-                        f"Engagement: Where possible, make the questions interesting and engaging by incorporating real-life scenarios, experiments, or fun elements to stimulate curiosity and interest in the subject."                        
-                        # f"Useabl Formats: Include a mix of multiple-choice questions with four options and short answer questions."
-                        f"Useable Formats: Give only this type: {content_types_str_value} of the questions while generating while generating questions."
-                        f"options generation: Generate four options for multiple-choice questions, make each option different from others, in this JSON format:{{'opt1':'option-1', 'opt2':'option2', 'opt3':'option3', 'opt4':'option4'}}, in case of short answer give option field as {{[]}}."
-                        f"Rubric generation: Generate a detailed rubric for the following question based on the provided topic, skill, question type, and marks. The rubric should be specific, concise, and divided into categories according to the total marks available. provide one clear and specific line that describes what is required to earn that score. Ensure the rubric covers all key aspects of the answer, including accuracy, completeness, and understanding of the concept, do not generate rubrics for multiple-choice questions just give {{[]}}, give me in this form, and do not provide a 0 mark rubric text. Based on the provided image, create rubrics for the given science question and its associated marks. The rubric should be structured as JSON objects with the following structure: {{'RubricText': Text of the rubrics, 'Marks': marks awarded for following these particular rubrics in multiple of 0.5}} "
-                        f"Ensure the rubrics align closely with the skill and topic presented in the image. The rubric should be precise, specific to the question, and not overly detailed."                                                                        
-                        f"Format: Provide the questions in a JSON format with the following keys: Grade, Subject, Topic, Question, questionType, Marks, Answer, Rubrics, options."
-                        f"Make sure the set does not contain more than {5} questions, covering all the listed topics comprehensively.")
+        #### for claude 3.5 on nov 12 2024... ####
+        # system_prompt = (f"You are a teacher creating a set of questions for grade-{grade_level} students based on the {education_board} curriculum. The questions should cover a variety of topics relevant to the syllabus and should be appropriate for {age_range} year old students."
+        #                 f"Requirements: "
+        #                 f"Variety of Topics: Ensure that the questions cover all major topics from the grade {grade_level}-{subject} syllabus, including given topics of {topic}."                         
+        #                 f"Difficulty Level: The questions should be appropriately challenging for grade-{grade_level} students, balancing between conceptual understanding and practical application. Clarity and Simplicity: Use simple language and clear instructions, making sure each question is easy to understand for {age_range} year-old students."
+        #                 f"Engagement: Where possible, make the questions interesting and engaging by incorporating real-life scenarios, experiments, or fun elements to stimulate curiosity and interest in the subject."                        
+        #                 # f"Useabl Formats: Include a mix of multiple-choice questions with four options and short answer questions."
+        #                 f"Useable Formats: Give only this type: {content_types_str_value} of the questions while generating while generating questions."
+        #                 f"options generation: Generate four options for multiple-choice questions, make each option different from others, in this JSON format:{{'opt1':'option-1', 'opt2':'option2', 'opt3':'option3', 'opt4':'option4'}}, in case of short answer give option field as {{[]}}."
+        #                 f"Rubric generation: Generate a detailed rubric for the following question based on the provided topic, skill, question type, and marks. The rubric should be specific, concise, and divided into categories according to the total marks available. provide one clear and specific line that describes what is required to earn that score. Ensure the rubric covers all key aspects of the answer, including accuracy, completeness, and understanding of the concept, do not generate rubrics for multiple-choice questions just give {{[]}}, give me in this form, and do not provide a 0 mark rubric text. Based on the provided image, create rubrics for the given science question and its associated marks. The rubric should be structured as JSON objects with the following structure: {{'RubricText': Text of the rubrics, 'Marks': marks awarded for following these particular rubrics in multiple of 0.5}} "
+        #                 f"Ensure the rubrics align closely with the skill and topic presented in the image. The rubric should be precise, specific to the question, and not overly detailed."                                                                        
+        #                 f"Format: Provide the questions in a JSON format with the following keys: Grade, Subject, Topic, Question, questionType, Marks, Answer, Rubrics, options."
+        #                 f"Make sure the set does not contain more than {5} questions, covering all the listed topics comprehensively.")
 
         # Call Claude API
         response = client.messages.create(
