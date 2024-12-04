@@ -36,7 +36,7 @@ def gpt_vision_calling(messages_vision,model_name='gpt-4-vision-preview'):
 def gpt_calling(messages,model_name='gpt-4o'):
     temperature = 0
     frequency_penalty = 1
-    max_tokens = 400
+    max_tokens = 800
     # model_name = 'gpt-4o'
     if(len(messages)>0):    
         API_KEY = os.getenv("OPENAI_API_KEY")
