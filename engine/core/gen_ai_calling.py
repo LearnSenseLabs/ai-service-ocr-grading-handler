@@ -3,7 +3,7 @@ import re
 import replicate
 import google.generativeai as genai
 
-from engine.core.latex_to_image import latex_to_image_handler
+# from engine.core.latex_to_image import latex_to_image_handler
 from engine.core.llm_calling import calude_calling, gpt_calling, gpt_vision_calling
 from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gpt
 from engine.core.ocr_llm_calling_modules import claude_vision_calling
@@ -24,6 +24,7 @@ llm_name_mapping = {
     "llamma-latest":{"modelName":"meta-llama-3.1-405b-instruct","modelClass":"llamaText"},
     "shozemi-gpt-latest":{"modelName":"gpt-4o","modelClass":"argumentativeEssayOcr"},
     "claude-vision-ocr":{"modelName":"claude-3-5-sonnet-20240620","modelClass":"claudeVisionOCR"},
+    "ensamble-vision":{"modelName":"llama-13B-vision","modelClass":"visionEnsamble"},
     # "gpt-vision-noOcr":{"modelName":"gpt-4-vision-preview","modelClass":"gptVision"}
 }
 
@@ -81,7 +82,8 @@ def gen_ai_calling_proxy(reqobj,task=''):
         # print(question_json)
         return convert_question_format(question_json)
     elif(task=='latex_to_image'):
-        return latex_to_image_handler(reqobj)
+        # return latex_to_image_handler(reqobj)
+        return reqobj
     grading_prompt = reqobj['gradingPrompt'] if(reqobj.__contains__('gradingPrompt')) else 'default'
     if(grading_prompt=='expository-essay-ocr'):
         # model_name_sample = "gpt-vision-mcq"
@@ -122,7 +124,7 @@ def gen_ai_calling_proxy(reqobj,task=''):
     elif(student_answer=='' and model_class=='gptText'):
         student_answer_url = []
     maxScore = reqobj['questionInfo']['maxScore'] if('maxScore' in reqobj['questionInfo']) else 1
-    if(model_class=='gptOCR' or model_class=='gptVisionOCR' or model_class=='gptVisionMCQ' or model_class=='argumentativeEssayOcr' or model_class=='claudeVisionOCR'):
+    if(model_class=='gptOCR' or model_class=='gptVisionOCR' or model_class=='gptVisionMCQ' or model_class=='argumentativeEssayOcr' or model_class=='claudeVisionOCR' or model_class=='visionEnsamble'):
         # system_instruction = "Please look at given image and give feedback on student's visual and texual representation of the answer you are giving ocr in 20 words as 'Description': (write 'Description:' before the Description)"
         system_instruction = "Please look at the given image and give feedback on the student's visual representation of the answer you, Give concrete examples of how to improve, based on rubrics provided. Be extremely concise, Be direct and to the point Be straightforward and clear, Feedback in 40 words or less, Shortest feedback for fully correct answer, Strictly only consider matching criteria for scoring, Maximum Score: "
         if(model_class=='argumentativeEssayOcr' and student_answer!=''):
@@ -138,8 +140,15 @@ def gen_ai_calling_proxy(reqobj,task=''):
             # if(system_instruction==""):
             #     system_instruction = "You will read the handwritting in the given image, write what you read in the image as it is, "
             # scoring_criteria = "give it in the json as {'ocr':value}"
-            system_instruction = "You will read the handwritting in the given image, write what you read in the image as it is, "
-            scoring_criteria = " give it in the string format as value"
+            with open("engine/gen_utils_files/subject_wise_prompt.json", 'r') as file:
+                prompts = json.load(file)
+            system_instruction_temp = get_prompt(task="ocr",subject_name=subject_name,prompts_json_data=prompts)
+            system_instruction = re.sub(r"\\\\", r"\\", system_instruction_temp)
+            if(system_instruction==""):
+                system_instruction = "You will transcribe the English handwriting in the provided image exactly as it is written, without any modifications, corrections, or interpretations. The students are of a younger age and studying in Gujarat state. Keep the original structure, including all punctuation, capitalization, and line breaks, without altering any names, dates, or terms. If there are any non-text elements such as underlines, symbols, or figures, describe them briefly starting with Non-text element: in their respective position. Provide the output as a plain string, with no extra explanations or formatting, maintaining the exact order and structure of the text as it appears in the image. give it in the string format without any pretext, provide just the value"
+            scoring_criteria = ". If given image is blank(empty) please return 'given image is empty' string as value"
+            # system_instruction = "You will read the handwritting in the given image, write what you read in the image as it is, "
+            # scoring_criteria = " give it in the string format as value"
         elif(model_class=='claudeVisionOCR'):
             
             with open("engine/gen_utils_files/subject_wise_prompt.json", 'r') as file:
@@ -148,7 +157,7 @@ def gen_ai_calling_proxy(reqobj,task=''):
             system_instruction = re.sub(r"\\\\", r"\\", system_instruction_temp)
             if(system_instruction==""):
                 system_instruction = "You will transcribe the English handwriting in the provided image exactly as it is written, without any modifications, corrections, or interpretations. The students are of a younger age and studying in Gujarat state. Keep the original structure, including all punctuation, capitalization, and line breaks, without altering any names, dates, or terms. If there are any non-text elements such as underlines, symbols, or figures, describe them briefly starting with Non-text element: in their respective position. Provide the output as a plain string, with no extra explanations or formatting, maintaining the exact order and structure of the text as it appears in the image. give it in the string format without any pretext, provide just the value"
-            scoring_criteria = '.'
+            scoring_criteria = ". If given image is blank(empty) please return 'given image is empty' string as value"
             # scoring_criteria = " give it in the string format without any pretext, provide just the value"
                         
             ## updated prompt on oct-16-2024
@@ -162,15 +171,20 @@ def gen_ai_calling_proxy(reqobj,task=''):
         elif(model_class=='gptVisionMCQ'):
             system_instruction = "You are checking multiple choice questions and give me which option is ticked by the user, give me just the option that the user has marked"
             scoring_criteria = " JSON format as {'ocr': value}"
+        elif(model_class=='visionEnsamble'):
+            system_instruction = "Perform OCR on an image where each number is enclosed in a separate box. Ensure that the OCR system accurately recognizes each number, accounting for potential variations in handwriting, such as faint or broken strokes, or digits that may look similar. Pay particular attention to capturing each digit precisely, avoiding common misinterpretations (e.g., confusing '3' with '5' or '8' with '0' or '4' with '6'). Each recognized number should be provided on a new line, reflecting the layout of the boxes in the image. Do not give any introductory statements please"
+            scoring_criteria = " Give each recognition with \n"
         else:
             # scoring_criteria = " with a detected value in the json as {'ocr':value}"
             scoring_criteria = ", in a JSON format with this schema:\\n{ \\\"feedback\\\": Your feedback here in one paragraph of type string,\\n     \\\"score\\\": Student Score,\\n    \\\"maxScore\\\": Maximum Score }"
+
         messages_vision = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer,maxScore=maxScore,
                                                  system_instruction=system_instruction,scoring_criteria=scoring_criteria,model_class=model_class,
                                                  gradingPrompt=grading_prompt,answerUrl=student_answer_url)
     else:
         if(model_class=='gptText' and student_answer==''):
-            system_instruction = os.getenv("SYSTEM_INSTRUCTION_EMPTY")
+            # system_instruction = os.getenv("SYSTEM_INSTRUCTION_EMPTY")
+            system_instruction = "You are giving ideal response to the student who is not able to provide any answer for the given question, be gentle and explain correct answer to him in order to help him learn that topic well so in future he can answer similar type of question easily, and always provide 0(zero) as score, out of MaxScore: "
         else:
             system_instruction = ""
         messages = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer,maxScore=maxScore,system_instruction=system_instruction,gradingPrompt=grading_prompt)
@@ -197,6 +211,8 @@ def gen_ai_calling_proxy(reqobj,task=''):
         res_calude  = claude_vision_calling(user_image=student_answer_url,system_prompt=messages_vision['systemPrompt'])
         # student_answer_ocr = find_data_in_string(res_vision['response'])
         student_answer_ocr = res_calude['response']
+        if(student_answer_ocr.lower()=='given image is empty'):
+            return {"statusCode":200,"response":{"ocr":student_answer_ocr,"aiFeedback":"No answer provided","score":0,"maxScore":maxScore}}
         messages_gpt = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer_ocr,maxScore=maxScore,gradingPrompt=grading_prompt)
         res_gpt = gpt_calling(messages_gpt,model_name_text)
         res_gpt['response']['ocr'] = student_answer_ocr
@@ -269,6 +285,10 @@ def gen_ai_calling_proxy(reqobj,task=''):
         final_out =  "".join(output)
         # print(final_out)
         return {"statusCode":200,"response":final_out}
+
+    # elif(model_class=='ensamble-vision'):
+        
+    
     elif(model_class=='argumentativeEssayOcr'):
         ### task: add error handling for all three gpt vision calls
         # put all under feedback ....    
