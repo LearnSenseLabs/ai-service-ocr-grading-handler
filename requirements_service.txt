@@ -11,4 +11,4 @@ google-generativeai
 replicate
 nanoid
 pymongo
-matplotlib
+openai

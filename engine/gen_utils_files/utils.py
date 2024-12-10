@@ -98,12 +98,18 @@ def add_response_to_db(user_response,reqobj,task=''):
         student_answer_correct_flag = False
     else:
         student_answer_correct_flag = False
-        
-    if(student_answer_ocr==''):
-        student_answer_empty_flag = True
-    else:
-        student_answer_empty_flag = False
-        
+    
+    if(isinstance(student_answer_ocr,int)):
+        if(student_answer_ocr==''):
+            student_answer_empty_flag = True
+        else:
+            student_answer_empty_flag = False
+    else:    
+        if(student_answer_ocr=='' or student_answer_ocr.lower()=='given image is empty'):
+            student_answer_empty_flag = True
+        else:
+            student_answer_empty_flag = False
+            
     ## creating data to send to queue
     reqobj_to_update = {
         'key_value_pair_to_update_data':{'aiFeedback':student_answer_aiFeedback,

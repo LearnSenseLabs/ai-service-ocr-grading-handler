@@ -103,27 +103,48 @@ def question_generation(input_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         user_prompt = f"Generate {num_questions} questions on the topic '{topic}' for grade-{grade_level} students studying {subject}. Only include {content_types_str_value} questions. Provide in purely JSON format and no other."
         
         generation_format = f""
-        system_prompt = (
-        f"You are a teacher creating a set of questions for grade-{grade_level} students."
-        f"The questions should cover a variety of topics relevant to the syllabus and should be appropriate for {age_range} year old students. "
-        f"Requirements: "
-        f"Variety of Topics: Ensure that the questions cover all major topics from the grade {grade_level}-{subject} syllabus, including given topics of {topic}. "
-        f"Difficulty Level: The questions should be appropriately challenging for grade-{grade_level} students, balancing between conceptual understanding and practical application. "
-        f"Clarity and Simplicity: Use simple language and clear instructions, making sure each question is easy to understand for {age_range} year-old students. "
-        f"Engagement: Where possible, make the questions interesting and engaging by incorporating real-life scenarios, experiments, or fun elements to stimulate curiosity and interest in the subject. "
-        f"Useable Formats: Only include {content_types_str_value} questions."
-        f"Options Generation: Generate four options for multiple-choice questions in JSON format {{'opt1':'option1', 'opt2':'option2', 'opt3':'option3', 'opt4':'option4'}}. For short answer questions, leave the options as an empty list {{[]}} and provide the actual answer in the Answer field. "
-        f"For MCQs, the Answer field should always contain the correct option identifier (e.g., opt2 for the second option)."
-        f"Rubric generation: Generate a detailed rubric for the following question based on the provided topic, skill, question type, and marks. The rubric should be specific, concise, and divided into categories according to the total marks available. Provide one clear and specific line that describes what is required to earn that score. Ensure the rubric covers all key aspects of the answer, including accuracy, completeness, and understanding of the concept, do not generate rubrics for multiple-choice questions just give {{[]}}. Give me in this form, and do not provide a 0 mark rubric text. Based on the provided image, create rubrics for the given question and its associated marks. Distribute the total marks into specific criteria (e.g., if a question is worth 2 marks, assign 1 mark for one step and 1 mark for another, or 0.5 increments for multiple smaller steps). The rubric should be structured as JSON objects with the following structure: {{'RubricText': Text of the rubrics, 'Marks': marks awarded for following these particular rubrics in multiple of 0.5}} "
-        f"Format: Provide the questions in JSON format with keys: Grade, Subject, Topic, Question, questionType, Marks, Answer, Rubrics, options. "
-        #f"ASCII Format: For mathematical expressions, formulas, and fractions, provide them in plain ASCII format using symbols such as '/' for fractions, '^' for exponents, and 'sqrt(...)' for square roots. For Fractions use (numerator)/(denominator)"
-        f"ASCII Format: For mathematical expressions, formulas, and fractions, enclose all mathematical terms in backticks (` `). Use symbols such as `/` for fractions, `^` for exponents, and `sqrt(...)` for square roots. For fractions, write as `(numerator)/(denominator)`, don't give ascii format in options text in mcq. "
-        f"Only provide questions in ASCII format and not in Latex format. Represent vectors using component notation, e.g., `a = (1)i + (-3)j + (1)k`. Do not use LaTeX-like formatting such as `\\` or `\\hat`."
-        f"Ensure that all mathematical terms such as `cos(theta)`, `sin(theta)`, `tan(30 degrees)`, and similar are enclosed entirely within backticks."
-        f"Ensure that all the mathematical terms in all the fields Question, Answer, Rubrics and options strictly follow this format and are in backticks (` `)."
-        f"Limit the set to {num_questions} questions, covering the topics comprehensively."
-        f"Only include {content_types_str_value} questions."
-    )
+        subject = subject.lower()
+        if(subject=="mathematics" or subject=='science' or subject=='physics' or subject=='chemistry' or subject=='biology'):
+            system_prompt = (
+            f"You are a teacher creating a set of questions for grade-{grade_level} students."
+            f"The questions should cover a variety of topics relevant to the syllabus and should be appropriate for {age_range} year old students. "
+            f"Requirements: "
+            f"Variety of Topics: Ensure that the questions cover all major topics from the grade {grade_level}-{subject} syllabus, including given topics of {topic}. "
+            f"Difficulty Level: The questions should be appropriately challenging for grade-{grade_level} students, balancing between conceptual understanding and practical application. "
+            f"Clarity and Simplicity: Use simple language and clear instructions, making sure each question is easy to understand for {age_range} year-old students. "
+            f"Engagement: Where possible, make the questions interesting and engaging by incorporating real-life scenarios, experiments, or fun elements to stimulate curiosity and interest in the subject. "
+            f"Useable Formats: Only include {content_types_str_value} questions."
+            f"Options Generation: Generate four options for multiple-choice questions in JSON format {{'opt1':'option1', 'opt2':'option2', 'opt3':'option3', 'opt4':'option4'}}. For short answer questions, leave the options as an empty list {{[]}} and provide the actual answer in the Answer field. "
+            f"For MCQs, the Answer field should always contain the correct option identifier (e.g., opt2 for the second option)."
+            f"Rubric generation: Generate a detailed rubric for the following question based on the provided topic, skill, question type, and marks. The rubric should be specific, concise, and divided into categories according to the total marks available. Provide one clear and specific line that describes what is required to earn that score. Ensure the rubric covers all key aspects of the answer, including accuracy, completeness, and understanding of the concept, do not generate rubrics for multiple-choice questions just give {{[]}}. Give me in this form, and do not provide a 0 mark rubric text. Based on the provided image, create rubrics for the given question and its associated marks. Distribute the total marks into specific criteria (e.g., if a question is worth 2 marks, assign 1 mark for one step and 1 mark for another, or 0.5 increments for multiple smaller steps). The rubric should be structured as JSON objects with the following structure: {{'RubricText': Text of the rubrics, 'Marks': marks awarded for following these particular rubrics in multiple of 0.5}} "
+            f"Format: Provide the questions in JSON format with keys: Grade, Subject, Topic, Question, questionType, Marks, Answer, Rubrics, options. "
+            #f"ASCII Format: For mathematical expressions, formulas, and fractions, provide them in plain ASCII format using symbols such as '/' for fractions, '^' for exponents, and 'sqrt(...)' for square roots. For Fractions use (numerator)/(denominator)"
+            f"ASCII Format: For mathematical expressions, formulas, and fractions, enclose all mathematical terms in backticks (` `). Use symbols such as `/` for fractions, `^` for exponents, and `sqrt(...)` for square roots. For fractions, write as `(numerator)/(denominator)`, don't give ascii format in options text in mcq. "
+            f"Only provide questions in ASCII format and not in Latex format. Represent vectors using component notation, e.g., `a = (1)i + (-3)j + (1)k`. Do not use LaTeX-like formatting such as `\\` or `\\hat`."
+            f"Ensure that all mathematical terms such as `cos(theta)`, `sin(theta)`, `tan(30 degrees)`, and similar are enclosed entirely within backticks."
+            f"Ensure that all the mathematical terms in all the fields Question, Answer, Rubrics and options strictly follow this format and are in backticks (` `)."
+            f"Limit the set to {num_questions} questions, covering the topics comprehensively."
+            f"Only include {content_types_str_value} questions."
+        )
+        else:
+            system_prompt = (
+            f"You are a teacher creating a set of questions for grade-{grade_level} students."
+            f"The questions should cover a variety of topics relevant to the syllabus and should be appropriate for {age_range} year old students. "
+            f"Requirements: "
+            f"Variety of Topics: Ensure that the questions cover all major topics from the grade {grade_level}-{subject} syllabus, including given topics of {topic}. "
+            f"Difficulty Level: The questions should be appropriately challenging for grade-{grade_level} students, balancing between conceptual understanding and practical application. "
+            f"Clarity and Simplicity: Use simple language and clear instructions, making sure each question is easy to understand for {age_range} year-old students. "
+            f"Engagement: Where possible, make the questions interesting and engaging by incorporating real-life scenarios, experiments, or fun elements to stimulate curiosity and interest in the subject. "
+            f"Useable Formats: Only include {content_types_str_value} questions."
+            f"Options Generation: Generate four options for multiple-choice questions in JSON format {{'opt1':'option1', 'opt2':'option2', 'opt3':'option3', 'opt4':'option4'}}. For short answer questions, leave the options as an empty list {{[]}} and provide the actual answer in the Answer field. "
+            f"For MCQs, the Answer field should always contain the correct option identifier (e.g., opt2 for the second option)."
+            f"Rubric generation: Generate a detailed rubric for the following question based on the provided topic, skill, question type, and marks. The rubric should be specific, concise, and divided into categories according to the total marks available. Provide one clear and specific line that describes what is required to earn that score. Ensure the rubric covers all key aspects of the answer, including accuracy, completeness, and understanding of the concept, do not generate rubrics for multiple-choice questions just give {{[]}}. Give me in this form, and do not provide a 0 mark rubric text. Based on the provided image, create rubrics for the given question and its associated marks. Distribute the total marks into specific criteria (e.g., if a question is worth 2 marks, assign 1 mark for one step and 1 mark for another, or 0.5 increments for multiple smaller steps). The rubric should be structured as JSON objects with the following structure: {{'RubricText': Text of the rubrics, 'Marks': marks awarded for following these particular rubrics in multiple of 0.5}} "
+            f"Format: Provide the questions in JSON format with keys: Grade, Subject, Topic, Question, questionType, Marks, Answer, Rubrics, options. "
+            f"Ensure that all mathematical terms such as `cos(theta)`, `sin(theta)`, `tan(30 degrees)`, and similar are enclosed entirely within backticks."
+            f"Ensure that all the mathematical terms in all the fields Question, Answer, Rubrics and options strictly follow this format and are in backticks (` `)."
+            f"Limit the set to {num_questions} questions, covering the topics comprehensively."
+            f"Only include {content_types_str_value} questions."
+        )
         
         ##### older version till dec-4 ###########
     #     system_prompt = (
@@ -301,7 +322,17 @@ def question_generation(input_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Unexpected error in question generation: {str(e)}")
         raise
-    
+
+def size_getter_from_marks(marks):
+    if(marks == 1):
+        return "1/8"
+    elif(marks == 2):
+        return "1/4"
+    elif(marks == 3):
+        return "1/3"
+    else:
+        return "1/2"
+
 def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Convert the questions from Claude's format to the desired output format.
@@ -326,7 +357,7 @@ def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, A
             "lineSpacing": 20,
             "lineColor": '#828282',
             "aiGrading": True,
-            "size": '1/8',
+            "size": size_getter_from_marks(que_wise_data["marks"]),
             "questionId": generate(),
             "answerBoxId": generate(), 
             "settings": 4,
@@ -379,7 +410,8 @@ def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, A
                 new_que_wise_data["ans"] = que_wise_data["answer"]
             else:
                 new_que_wise_data['rubrics'] = []
-                new_que_wise_data['markUpFormat'] = 'asciiMath'
+                subject = que_wise_data['subject'].lower() if(que_wise_data.__contains__('subject')) else 'english'
+                new_que_wise_data['markUpFormat'] = 'asciiMath' if(subject=="mathematics" or subject=='science' or subject=='physics' or subject=='chemistry' or subject=='biology') else 'text'
                 for rubrics_data in que_wise_data['rubrics']:
                     new_que_wise_data["rubrics"].append({
                         "score": rubrics_data['marks'],
