@@ -360,7 +360,7 @@
 #             image_in_reqobj['image_base64'] = image_base64
 #     return reqobj
 import matplotlib.pyplot as plt
-import base64,io
+import base64,io,re,time
 from matplotlib import cm
 from matplotlib import font_manager
 
@@ -392,15 +392,64 @@ def latex_to_image_core(latex_expression, fontsize=16, dpi=100):
 
     return image_base64
 
+def latex_formatter(latex_equation):
+# Regular expression to match the figure description and remove it
+    match = re.search(r'Figure Description: (.*)', latex_equation)
+
+    if match:
+        figure_description = match.group(1)
+        # Remove the figure description from the main text
+        text_without_description = latex_equation.replace(match.group(0), '').strip()
+
+        # Function to add new lines after 80 characters in the figure description
+        def add_new_lines_to_description(description, line_length=60):
+            words = description.split(' ')
+            current_line = ''
+            result = []
+            # print(words)
+            for word in words:
+                if len(current_line + ' ' + word) <= line_length:
+                    current_line += ' ' + word if current_line else word
+                else:
+                    result.append(current_line)
+                    current_line = word
+
+            # Add the last line
+            if current_line:
+                result.append(current_line)
+
+            return '\n'.join(result)
+
+        # Break the figure description into lines
+        # print(figure_description)
+        formatted_description = add_new_lines_to_description("Figure Description: "+figure_description)
+
+        # Combine the formatted text with the new description
+        final_text = f"{text_without_description}\n\n {formatted_description}"
+
+        print(final_text)
+        return final_text
+    else:
+        print("No figure description found.")
+        return latex_equation
+
+
+
 def latex_to_image_handler(reqobj):
+    start_time = time.time()
     for image_in_reqobj in reqobj:
         max_width = image_in_reqobj['width']
         latex_text = image_in_reqobj['questionText']
         if 'markupFormat' in image_in_reqobj and image_in_reqobj['markupFormat'] == 'latex':
+            formated_latex_text = latex_formatter(latex_text)
             image_base64 = latex_to_image_core(
-                latex_text,
+                formated_latex_text,
                 fontsize=14,
                 dpi=100
             )
             image_in_reqobj['image_base64'] = image_base64
+    
+    end_time = time.time()  # End the timer
+    elapsed_time = end_time - start_time  # Calculate the elapsed time
+    print(f"Time taken for image generation: {elapsed_time:.4f} seconds")
     return reqobj
