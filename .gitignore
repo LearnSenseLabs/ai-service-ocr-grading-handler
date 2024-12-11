@@ -1,0 +1,6 @@
+*.pyc
+*.pyo
+.env.dev
+.env.prod
+.env.staging
+*.txt

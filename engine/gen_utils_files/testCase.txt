@@ -341,3 +341,134 @@
 #     "body": "{\n    \"modelName\": \"gpt-4-latest\",\n    \"questionInfo\": {\n        \"question\": \"In cold countries, a solution of water and ethylene glycol is used as a coolant in automobile engine radiators. Explain why.\",\n        \"rubrics\": [\n            {\n                \"rubricId\": \"d2c00f3a-aa02-4f89-9ca3-1273be98c2d1\",\n                \"score\": 0.5,\n                \"criteria\": \"The reason should be mentioned as: The addition of ethylene glycol depresses the freezing point of water.\"\n            },\n            {\n                \"rubricId\": \"8fcbeb2e-e9f4-4513-9046-3465e450e22a\",\n                \"score\": 0.5,\n                \"criteria\": \"The explanation should be: Water freezes at lower temperature\"\n            }\n        ],\n        \"maxScore\": 1,\n        \"studentAnswerUrl\": [\n          \"\" ],\n        \"studentAnswer\": \"\"\n    },\n    \"gradingPrompt\": \"default\"\n}",
 #     "isBase64Encoded": False
 # }
+
+   event = {
+    "Records": [
+        {
+            "messageId": "0041c27f-7433-4322-a74b-03923369a99f",
+            "receiptHandle": "AQEBwuxbncKqN3XsQ5SixYigiZSTJ8JAi7B87pt6CxKGyuNFaZKfSBVvczZhkM7AI/u8ZRbdzjK/peJyzu47PRkZtm1wrGPhN4b3DMXTITSygKOEyCneu6Ilp+dHPWMxBPfXKmE6FWZDaa4pC8uKG+BVO7Uc2L4O0B/vPzh/CLsN27yRMys9pPc9lSi66Iqf1TQLWWlQxGc29Rqcyqsuhe5sDcJksW0LNnvnZTCuHMBodpaYYh0mNYip0GMtCtEaNvLLRKFfznSVNHbqVqAPsFRbGO21Gsok19zmb89D3qrZ7GPfHCw7qzxSLjKnDGA8T3D0",
+            "body": "[{\"modelName\": \"shozemi-gpt-latest\", \"questionInfo\": {\"question\": \"\", \"studentAnswer\": \"Some people say that people should continue to work after the retirement age. I agree with this statement because of health and money. First, It is health to walk for them. This is because walking makes them relax, for example, they can see a lot of beautiful nature when they can walk. Second, Walking means saving money. This is because we always want to have fun so we sometimes take a bus But sbases cost money. Therefore we should walk.\", \"rubrics\": [{\"rubricId\": \"9b8d81aa-aeab-47ca-afb7-3de9ec8a563b\", \"score\": 1, \"criteria\": \"Word Count (100+ / 120+ overall priority level will depend on whether Eiken 2 or pre-1)\"}, {\"rubricId\": \"e7e32279-486f-468d-8fa2-717d6d02dac6\", \"score\": 1, \"criteria\": \"Uses transition words or phrases to connect ideas\"}, {\"rubricId\": \"7ebf5d5c-85de-48ed-9ec9-81af6499b69c\", \"score\": 1, \"criteria\": \"clear opinion stated\"}, {\"rubricId\": \"c264a834-2c93-4eaa-8a0b-4b2ea3b7cf8b\", \"score\": 1, \"criteria\": \"supported with facts/reasons\"}, {\"rubricId\": \"d8ca99e7-f68b-4f6f-abf6-c53b9493d040\", \"score\": 1, \"criteria\": \"good vocabulary usage on topic (synonyms and antonyms, vocabulary from Monoxer)\"}, {\"rubricId\": \"f7837f0e-bb28-451d-a642-94e28d4b8621\", \"score\": 1, \"criteria\": \"uses subject sentence, transitions between topics, transitions between topics and conclusion effectively\"}, {\"rubricId\": \"a9670768-7dab-4aa0-80e8-4c5d3afce838\", \"score\": 1, \"criteria\": \"demonstrates correct use of an adverb (necessary at the pre-1 level)\"}, {\"rubricId\": \"aab94de0-eccb-4756-95a2-d448d22488c4\", \"score\": 1, \"criteria\": \"conclusion rephrases the main points made in body paragraph 1 and 2\"}], \"maxScore\": 8, \"studentAnswerUrl\": \"\"}, \"gradingPrompt\": \"shozemi-ocr\", \"studentId\": \"essay\", \"status\": \"processing\"}]",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "SentTimestamp": "1723479785688",
+                "SequenceNumber": "18887954898845679616",
+                "MessageGroupId": "groupIdv1",
+                "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+                "MessageDeduplicationId": "c593d3a6bc4ce9cc78e17a427d9126f4c0d9fd0e0e3b2cb424ccc33df6b28f5f",
+                "ApproximateFirstReceiveTimestamp": "1723479785688"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "05e69e8b7985320a16d2f45f5bb7c8bb",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue.fifo",
+            "awsRegion": "ap-south-1"
+        }
+    ]
+}
+    event = {
+    "Records": [
+        {
+            "messageId": "b1cec3ac-b5f2-458b-a9e5-f617b094fda6",
+            "receiptHandle": "AQEB/2T7ra5hJ1H/v6e8zMkDI3BSQv/J0uH8dQt7bOZTebXXFpIjwD7LoMImBbNiISWSD8OG5X02otrJLg7A3DxYtJk4rEf2UmPbF4wn/Dz41K2iqlQ48prEOPZBFhI3T+6OTntl0e07bwa0v/iBOKHMZ6kYMlMAr6NkrYQcSPkY2Pg3rf+tb7i2Vz0Q0VfIfkN7GIViOnthV8ejZl/naV+gLRRnTEXhxZzL8Kjov8EjFMiOg/8XR8w36S9Z+kvUSTW57oaJRZFV17QByLRW5v/+0gbnR1vHFq7ZNrC2RIC5ib8ca+P+Nr4pLUUZo3FjXdTDa4MJhqLKIjvwAnl8fM/vEjVED1GdSSNK8J6B6ke7OX1XmoysGNUXpENR2NPDxnu/I70YUi4cRCI8DLMO0kagjn6oTIuKkRK2QpLeKZTgpXg=",
+            "body": "[{\"modelName\": \"gpt-ocr-latest\",\"subject\": \"maths\", \"questionInfo\": {\"question\": \"Solve for y: 4y + 5 = 21\", \"studentAnswer\": \"44+6 = 21 4 4 = 21-5 44: 20 y = 5\", \"rubrics\": [{\"rubricId\": \"f63de483-5b44-4892-9cdc-0996fc1e3b2a\", \"score\": 1, \"criteria\": \"Correctly isolating the term 4y by subtracting 5 from both sides.\"}, {\"rubricId\": \"f391ffa8-c28f-4440-b24d-8906a09411c7\", \"score\": 1, \"criteria\": \"Correctly solving for y to get y = 4\"}], \"maxScore\": 2, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/dev/66e53d08feff562691036a58/c75366f0-f62c-4e98-807b-a4ed77bc4ea5/ans_crop/bb665f64-7717-4e1c-a950-5af6fee50a4c.webp\"}, \"gradingPrompt\": \"ocr\", \"status\": \"processing\", \"scanId\": \"c75366f0-f62c-4e98-807b-a4ed77bc4ea5\", \"studentId\": \"eSQgTQAGSzZtLTepQu40T\", \"queId\": \"f0c0d293-332e-4b60-be4a-e4969ef71da1\"}, {\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"The sum of a number and its double is 18. Find the number.\", \"studentAnswer\": \"n + 2n = 18 3 n= 18 n= 6\", \"rubrics\": [{\"rubricId\": \"6c1d8148-a95e-49f2-bd6a-5efc7066f4da\", \"score\": 1, \"criteria\": \"Setting up the correct equation n + 2n = 18 or 3n = 18\"}, {\"rubricId\": \"f23461e3-7476-4ae3-bdbd-f88a5334ea7e\", \"score\": 1, \"criteria\": \"Correctly solving for n to get n = 6\"}], \"maxScore\": 1, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/dev/66e53d08feff562691036a58/c75366f0-f62c-4e98-807b-a4ed77bc4ea5/ans_crop/55309f6c-e69f-41ee-b006-0fe6e28bd527.webp\"}, \"gradingPrompt\": \"ocr\", \"status\": \"processing\", \"scanId\": \"c75366f0-f62c-4e98-807b-a4ed77bc4ea5\", \"studentId\": \"eSQgTQAGSzZtLTepQu40T\", \"queId\": \"421dce28-a434-4599-afbb-3605270cf42e\"}]",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "SentTimestamp": "1727318677687",
+                "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+                "ApproximateFirstReceiveTimestamp": "1727318677691"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "1b217d22ae6145d8d78def62dcd43280",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-prod",
+            "awsRegion": "ap-south-1"
+        }
+    ]
+}
+    event = {
+    "Records": [
+        {
+            "messageId": "2217e5c1-e0d0-4489-9284-d11e83b71e1d",
+            "receiptHandle": "AQEBcH4rx9MrN+zrRFsjEN3SemZ4FaSFXKOwF4wV7hZFCIsz6oBrjlalddwNeD4u6jiMnskRrg6mx3DgvQe7Y8mS57DgI/JvMjmMq2LTPwAmorCC1/J7C3ruznlVoy1rTUJwjFmV8Oa+SkXn0EAR16Jl18CIGR4YR3JnojswXQdgf4agPusH0lmq3iHXw72K9DxiMhoDo82SmFXMqglMEXV/8/iRYX4ivZo8GGqwjziYEo3qw5wd+KCmzhplqWTrtpU/YS6Zv5SX3YYKi71nyvo6GD9ZlP9tduN90sgdFatSgF77r5XWep2L1vRPfhRHSOz96/jiIAaYAXpTKSwv6XxYH3VMnVNRTkt8of/6GkYCESMcYZsG44llh+ncEhlBag4UJU2CqN0vS/e+0XSa+97pcZWi89+6m0kIMgo/3vjI0Qw=",
+            "body": "[{\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"Write an essay on \\u201cThe Importance of Reading Books\\u201d. (150-200 words)\", \"studentAnswer\": \"\", \"rubrics\": [{\"rubricId\": \"c77e7832-a639-4f4f-95e6-91e2ff191121\", \"score\": 3, \"criteria\": \"Content and Ideas: The essay clearly explains multiple reasons why reading books is important (e.g., enhances knowledge, improves vocabulary, stimulates imagination, etc.). There should be well-explained arguments with relevant examples.\"}, {\"rubricId\": \"08a5ab96-7ade-4a47-b381-2196d8890c63\", \"score\": 2, \"criteria\": \"Structure and Organization: The essay has a clear introduction, body, and conclusion. Ideas flow logically, and paragraphs are well-structured, each focusing on a specific point.\"}, {\"rubricId\": \"f5fd8a58-41e3-42ef-bbd9-a6f03f766d2b\", \"score\": 2, \"criteria\": \"Clarity and Coherence: The essay is easy to read, with well-formed sentences, good transitions between ideas, and no ambiguity.\"}, {\"rubricId\": \"55c0f0cd-650b-4efe-9e23-001d797d50cb\", \"score\": 2, \"criteria\": \"Grammar and Language: The essay has proper grammar, spelling, and punctuation. The language is formal and appropriate for an academic essay.\"}, {\"rubricId\": \"961a960f-fa32-4dad-8fc6-743ecda4f525\", \"score\": 1, \"criteria\": \"Creativity and Engagement: The essay is engaging and creative, showing original thought or a unique perspective on the importance of reading books.\"}], \"maxScore\": 10, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/master/66fbbe9aa6810705e7fb2bfa/r2lkdxw6T57ASWZh60RUo/ans_crop/6cc558ac-650c-47e1-9b29-5dd22414485b.webp\"}, \"gradingPrompt\": \"expository-essay-ocr\", \"status\": \"processing\", \"student_id\": \"FjlUfYt641Zmjb0GpTYsP\", \"scan_id\": \"r2lkdxw6T57ASWZh60RUo\", \"que_id\": \"40d3e4d8-053c-4b3f-8a41-67daf954ce6c\"}]",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "AWSTraceHeader": "Root=1-66fbe720-1b83cd4a4490f42a5ec4dc5f;Parent=1e51f94b3a0cc092;Sampled=0;Lineage=1:bd4cecd5:0",
+                "SentTimestamp": "1727784738647",
+                "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+                "ApproximateFirstReceiveTimestamp": "1727784738649"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "e959053095e2828e8e91e2bf7e626fe9",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-prod-new",
+            "awsRegion": "ap-south-1"
+        }
+    ]
+}
+    event = {
+    "Records": [
+        {
+            "messageId": "7efc59fe-24e7-41e2-b7a2-92f59607b65e",
+            "receiptHandle": "AQEBCBiUMfCulHreWW68TilmB4qXYHoBO7KRKhFuO+ZIT4zEoImsD4J8cyZkP4GKVADo/q/d0nOHjN9MMxGok5R3ut5/RtKeOOAuiMdqOBbSz5gIM9p2dSm4Lk6GSFmWLQPoP6ieeELlwerwn7NDB+WwkW5gB87NQZRh76/8dyPGN2u8bMZSGa60B4M0a+s8/FOHUfEI36p/dyfVsSbO9bgNGTJ7zxUdoFybDoWWiZxt1gYP5Rfc8zR+BknSVq1KRkDWfkexuKOwM48sd8omfd8VTa4fH0nlNxYwgPE/m7zXQYvJViohLTASS2M8AE/jYtYG+J0jSFfq1Drkr1wDDOFZKNv28EKyHYfELr/aG+Q9hUS+VH3Rw/Ln4KMdnnTyZrIsWPGqdhrV41waXXHL2csvTElS/stK+m2Plq2OYB9oe4Y=",
+            "body": "[{\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"Agree or Disagree: Small businesses can survive in Japan's current economy. Use two of the points below to support your answer:\\n- Speed\\n_prices\\n- Customer relationships\\n- Employee recruitment\", \"studentAnswer\": \"\", \"rubrics\": [], \"maxScore\": 15, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/master/66fb6cb546cef0f0b1be9276/4LuRCNKV2-pIKrG1NXSQr/ans_crop/b1fa8f09-8b5a-48ce-af80-3078260d15c9.webp\"}, \"gradingPrompt\": \"argumentative-essay-ocr\", \"status\": \"processing\", \"subject\": \"\", \"scanId\": \"4LuRCNKV2-pIKrG1NXSQr\", \"studentId\": \"HVe2VA_S-4LUKSQUaWg-a\", \"queId\": \"517a3b24-d122-4d34-a66f-eab43e054ab9\"}]",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "AWSTraceHeader": "Root=1-66ff97a2-086f316066ffceaa72b533bf;Parent=01d2a9432654be4a;Sampled=0;Lineage=1:5625e7f4:0",
+                "SentTimestamp": "1728026537900",
+                "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+                "ApproximateFirstReceiveTimestamp": "1728026537902"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "15b9953f4bca83d4b5d6126f06ca6a40",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-prod-new",
+            "awsRegion": "ap-south-1"
+        }
+    ]
+}
+
+    event = {
+    "Records": [
+        {
+            "messageId": "115b5b5e-e240-44ec-905b-641e8c78b399",
+            "receiptHandle": "AQEBh3Obm3chRnRk6lr3yTZkmD0H2U4o1B/aUWI0f/GL2mXxyTymGlsg+7gAo2KA5LBEQDbH7uts0t6XA6rQl+2zM22ldNT9uCWm4mSjED/27fVhB/yiDwo29UK7YP41uC1I62dhqUEM08kf7jiIEtnz2eEOrwS7cPiCDLaYofWO+36n0UqzL8UWUA1LEE8/TERQcfWmrHfMTwCtkZzc4+Kr/Q54hXHppmtw5oGUutLSq9LFkthvJNvrJxFLQLO18DAtucSCBNQmz9TglyDeU2NBued2UuK4W2PNxScd1+fYmxIjiqZDTi1ZldXuhKapCn4FScp8PXoi5RpExA8hYV97I0oVaBbFchxTGvkb/mf/JTpBxN4BQwoGDhxkW3OQqxL9wY9FQ6tjK8fQWlMTPynl+TTJDPRRTnbralGvlvuTALw=",
+            "body": "[{\"modelName\": \"claude-vision-ocr\", \"questionInfo\": {\"question\": \"how does rainfall occur?\", \"studentAnswer\": \"When the water bodies get heated by solar radiations during the day, a large amount of water evaporates and goes in the air. The air carrying water vapours also gets heated. This hot air rises up carrying water vapours with it. As the air rises, it expands and cools. This cooling causes the water vapour in the air to condense as tiny droplets which slowly grow bigger by the condensation of more water droplets and forms clouds. When the droplets have grown big and heavy, they fall down in the form of rain.\", \"rubrics\": [{\"rubricId\": \"5b970ac8-612a-4632-9714-1377c56e189e\", \"score\": 1, \"criteria\": \"rainfall description\"}], \"maxScore\": 1, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/master/66fbf2b0dd4661864dbc4a9e/n4eq_xkBnydshRQcjGPbM/ans_crop/839ea69a-0d14-444f-a76e-d374f96768a4.webp\"}, \"gradingPrompt\": \"claude-ocr\", \"status\": \"processing\", \"student_id\": \"rXeJzUisUZwALN41E9xQt\", \"scan_id\": \"n4eq_xkBnydshRQcjGPbM\", \"que_id\": \"a86f3244-bf2e-4af7-8c58-00bb5c91aae9\"}]",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "AWSTraceHeader": "Root=1-66ff9b59-318636425d5d5d560531bb6d;Parent=4c75e0f5c5f1dc9a;Sampled=0;Lineage=1:bd4cecd5:0",
+                "SentTimestamp": "1728027482341",
+                "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+                "ApproximateFirstReceiveTimestamp": "1728027482354"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "84ba283851a9aaad1e38d91402e225f2",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-prod-new",
+            "awsRegion": "ap-south-1"
+        }
+    ]
+}
+
+
+    event = {
+    "Records": [
+        {
+            "messageId": "ffb016a6-9d5e-4b18-8f40-e52e1c9e5dc2",
+            "receiptHandle": "AQEBVsJm8mwAGNwxR/KcUeN5DTEXC1Ex8ruXuiD7VEB3lw0njBiZDxJKDkqdIj1UKdK3rsay85L6s0QCS/EqTbQ2HaUPnsJoyRLfOh1cLueTstR6Wa9I0VJE/nDVa4t51Crvdcut5AV2jLsLFEn0pxqzTyC28uyv2HOVS2e1sYyOXvDQh4tHJXlmy8hb3rLwdZ6P8f9rewQ2lEMKhSqOUuYO8aOvLzgPrJ41UJwg8lZjlDeB8atNG+Gq9tZqaVmEaiWOk4cn1yhzDoy4MPeZvVnoqCO1bkasUgDx5yo9Tmy8jrDM887Ur7P4E17/FyukbXaHTZDAhkW1eyxJ7VNjqSdD/cAIweG3eGdZMP//gosOXCCK5CQZh1spwleXLIsq/qySIAy99WNH39aUm3IpGEFBi77NqtcB1b0gJOmh8LEMORw=",
+            "body": "[{\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"Is 527 divisible by 3? If not, what is the nearest number that is divisible by 3?\", \"studentAnswer\": \"\", \"rubrics\": [{\"rubricId\": \"d77feaff-7f1f-477c-af8b-4afcfe968b6e\", \"score\": 1, \"criteria\": \"Correctly determines that 527 is not divisible by 3 (since the sum of its digits, 5 + 2 + 7 = 14, is not divisible by 3).\"}, {\"rubricId\": \"f5f838b9-5a2e-43a9-862b-64adb4bc0fe6\", \"score\": 1, \"criteria\": \"Identifies the nearest number divisible by 3 (i.e., 528).\"}], \"maxScore\": 2, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/master/67038612fe605db1a332ba7a/26XfTeX-UWp3oeWVYzspB/ans_crop/b47436d7-5bd0-4bb4-b8dd-50f688029a47.webp\"}, \"gradingPrompt\": \"claude-ocr\", \"status\": \"processing\", \"subject\": \"mathematics\", \"scanId\": \"26XfTeX-UWp3oeWVYzspB\", \"studentId\": \"gZn-jurCNsKdPu-WptYMB\", \"queId\": \"c9c661eb-8565-4bec-a273-2265e6545af2\"}]",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "AWSTraceHeader": "Root=1-6704feca-114e340249bcf75e7f5d9f44;Parent=7e12b74b0ed18cfc;Sampled=0;Lineage=1:5625e7f4:0",
+                "SentTimestamp": "1728380626116",
+                "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+                "ApproximateFirstReceiveTimestamp": "1728380628955"
+            },
+            "messageAttributes": {},
+            "md5OfBody": "8e6c294219f879978c1e6f7479d9a24f",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-prod-new",
+            "awsRegion": "ap-south-1"
+        }
+    ]
+}

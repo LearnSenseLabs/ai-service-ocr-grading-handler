@@ -1,3 +1,7 @@
+import base64,httpx
+
+from engine.gen_utils_files.utils import encode_image
+
 def convert_normal_to_gpt(message):
     updated_gpt_data = []
     
@@ -21,7 +25,7 @@ def convert_normal_to_gpt(message):
             "content": str("question: "+message['question'])
         })
     # if(message.__contains__('answer')):
-    if(message.__contains__('studentAnswer')):
+    if(message.__contains__('studentAnswer') or message.__contains__('answer')):
         updated_gpt_data.append({
             "role": "user",
             "content": str("studentAnswer: "+str(message['answer'])) if(str(message['answer'])!="") else "No Answer"
@@ -101,7 +105,7 @@ def convert_gpt_to_gemini(gpt_data):
     gemini_data["messages"] =[{"role":"user","parts":[combined_user_data]}]
     return gemini_data
 
-def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
+def convert_normal_to_gpt_vision(message,model_class="openai-ocr"):
     updated_gpt_vision_data = []
     image_url_json = {}
     # if(isinstance(message['answer'],list)):
@@ -112,9 +116,9 @@ def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
     #         'type':'image_url',
     #         'image_url':message['answer']
     #     }
-    
+    base64_image = encode_image(message['answerUrl'])
     # if(model_class=="gpt-ocr"):
-    if(model_class=="openai-ocr"):
+    if(model_class=="openai-ocr" or model_class=="gpt-ocr"):
     # for message in normal_data:
         if(message.__contains__('systemPrompt') and message.__contains__('answer')):
             updated_gpt_vision_data.append({
@@ -127,7 +131,8 @@ def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
                     {
                         "type":"image_url",
                         # "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
-                        "image_url":{"url":message['user_image']}
+                        # "image_url":{"url":message['answerUrl'] if(isinstance(message['answerUrl'],str)) else ""}
+                        "image_url":{"url": f"data:image/webp;base64,{base64_image}"}
                     }
                 ]
             })
@@ -138,12 +143,44 @@ def convert_normal_to_gpt_vision(message,model_class="gpt-ocr"):
                 "content": [
                     {
                         "type":"text",
-                        "text":message['systemPrompt']+", Question: "+message['question']+" ,"+message['Rubric']
+                        "text":message['systemPrompt']+", Question: "+message['question']+" ,"+message['rubric']
                     },
                     {
                         "type":"image_url",
-                        "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
+                        # "image_url":{"url":message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']}
+                        "image_url":{"url":message['answerUrl'] if(isinstance(message['answerUrl'],str)) else ""}
                     }
                 ]
             })
     return updated_gpt_vision_data
+
+def convert_normal_to_claude_vision(message, model_class="claude-vision"):
+    updated_claude_vision_data = []
+
+    if model_class == "claude-vision":
+        # if 'systemPrompt' in message and 'user_image' in message:
+        #     image_data = message['user_image']
+        #     if isinstance(image_data, str) and image_data.startswith('http'):
+        #         image_url = image_data
+        #     else:
+        #         raise ValueError("Image data must be a valid URL.")
+        if(message.__contains__('systemPrompt')):
+            image_url = message['answer'][0] if(isinstance(message['answer'],list)) else message['answer']
+            updated_claude_vision_data.append({
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": message['systemPrompt']
+                    },
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/webp",
+                            "data": base64.b64encode(httpx.get(image_url).content).decode("utf-8"),
+                    },
+                }
+                ]
+            })
+    return updated_claude_vision_data   

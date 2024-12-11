@@ -14,7 +14,7 @@ import anthropic
 import replicate
 import google.generativeai as genai
 
-from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_normal_to_gpt, convert_normal_to_gpt_vision
+from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_normal_to_claude_vision, convert_normal_to_gpt, convert_normal_to_gpt_vision
 from engine.gen_utils_files.utils import convert_rubric_to_string, find_data_in_string
 
 def openai_ocr(user_image,system_prompt="",description='',model_name='gpt-4o',lang='english'):
@@ -45,6 +45,38 @@ def openai_ocr(user_image,system_prompt="",description='',model_name='gpt-4o',la
     else:
         return response.status_code
 
+
+def claude_vision_calling(user_image,system_prompt,model_name="claude-3-5-sonnet-20241022", lang="eng"):
+    client = anthropic.Anthropic(
+        api_key=os.getenv("claude_api_key"),
+    )
+    reqobj_claude = {"systemPrompt":system_prompt,"answer":user_image}
+    messages_ocr = convert_normal_to_claude_vision(reqobj_claude)
+    
+    message = client.messages.create(
+        model=model_name,
+        max_tokens=1000,
+        temperature=0,
+        system=reqobj_claude["systemPrompt"],
+        messages=messages_ocr,
+    )
+    
+    if message.content:
+        # claude_json_response = find_data_in_string(message.content[0].text,"claude-json")
+        # claude_response = json.loads(claude_json_response)
+        claude_json_response = message.content[0].text
+        if(isinstance(claude_json_response,str)):
+            claude_response = claude_json_response
+        else:
+            claude_response = json.loads(claude_json_response)
+        # claude_response['score'] = float(claude_response['score'])
+        # claude_response['maxScore'] = float(claude_response['maxScore'])
+        claude_statusCode = 200
+    else:
+        response = {"ocr": ""}
+        ocr_statusCode = 400
+    
+    return {"statusCode": claude_statusCode, "response": claude_response}
 def openai_scoring(student_answer,maxScore,rubrics,question,system_prompt="",model_name="gpt-4o",lang="english"):
     # messages,model_name='gpt-4o'):    
     system_prompt = ""+maxScore
@@ -82,7 +114,7 @@ def openai_scoring(student_answer,maxScore,rubrics,question,system_prompt="",mod
             # print("output: ",response)
             response_json = json.loads(response["choices"][0]["message"]["content"])
             gpt_return_json = {
-                "feedback":response_json["feedback"],
+                "aiFeedback":response_json["feedback"],
                 "score":float(response_json["score"]),
                 "maxScore":float(response_json["maxScore"])
             }
@@ -102,8 +134,9 @@ def anthropic_scoring(student_answer,maxScore,rubrics,question,system_prompt="",
         )
     # model_name = "claude-3-opus-20240229" if(reqobj['modelName'] == "") else reqobj['modelName']
     
-    messages_antropic_scoring = {"systemPrompt":system_prompt+maxScore  ,"studentAnswer":student_answer,
+    messages_antropic_scoring = {"systemPrompt":system_prompt+maxScore,"studentAnswer":student_answer,
                                "question":question,"rubrics":convert_rubric_to_string(rubrics)}
+    
     reqobj_claude = convert_gpt_to_claude(convert_normal_to_gpt(messages_antropic_scoring))
     
     message = client.messages.create(
@@ -122,6 +155,6 @@ def anthropic_scoring(student_answer,maxScore,rubrics,question,system_prompt="",
         claude_response['maxScore'] = float(claude_response['maxScore'])
         claude_statusCode = 200
     else:
-        claude_response = {"feedback":"Claude does not found answer","score":0,'maxScore':1}
+        claude_response = {"aiFeedback":"Claude does not found answer","score":0,'maxScore':1}
         claude_statusCode = 400
     return {"statusCode":claude_statusCode,"response":claude_response}
