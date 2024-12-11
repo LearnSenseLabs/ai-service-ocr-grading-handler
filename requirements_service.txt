@@ -12,3 +12,4 @@ replicate
 nanoid
 pymongo
 openai
+matplotlib

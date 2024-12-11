@@ -3,7 +3,7 @@ import re
 import replicate
 import google.generativeai as genai
 
-# from engine.core.latex_to_image import latex_to_image_handler
+from engine.core.latex_to_image import latex_to_image_handler
 from engine.core.llm_calling import calude_calling, gpt_calling, gpt_vision_calling
 from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gpt
 from engine.core.ocr_llm_calling_modules import claude_vision_calling
@@ -82,8 +82,8 @@ def gen_ai_calling_proxy(reqobj,task=''):
         # print(question_json)
         return convert_question_format(question_json)
     elif(task=='latex_to_image'):
-        # return latex_to_image_handler(reqobj)
-        return reqobj
+        return latex_to_image_handler(reqobj)
+        # return reqobj
     grading_prompt = reqobj['gradingPrompt'] if(reqobj.__contains__('gradingPrompt')) else 'default'
     if(grading_prompt=='expository-essay-ocr'):
         # model_name_sample = "gpt-vision-mcq"

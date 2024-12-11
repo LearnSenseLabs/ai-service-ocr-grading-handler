@@ -359,3 +359,48 @@
 #             )
 #             image_in_reqobj['image_base64'] = image_base64
 #     return reqobj
+import matplotlib.pyplot as plt
+import base64,io
+from matplotlib import cm
+from matplotlib import font_manager
+
+def latex_to_image_core(latex_expression, fontsize=16, dpi=100):
+
+    # Calculate an approximate width and height based on the length of the LaTeX string
+     # Load custom font
+    font_path = '/engine/gen_utils_files/frontend_fonts.ttf'  # Specify the path to your custom font
+    prop = font_manager.FontProperties(fname=font_path)
+    
+    text_length = len(latex_expression)
+    width = 6 + (text_length / 150)  # Adjust the divisor for scaling the width
+    # print(width)
+    height = 1  # Keep height fixed
+
+    # Set up the plot with dynamic figure size
+    fig, ax = plt.subplots(figsize=(width, height))  # Adjust the size dynamically
+    ax.text(0, 1, f"{latex_expression}", fontsize=fontsize, ha='left', va='center',fontproperties=prop)
+
+    ax.axis('off')
+    
+    # Save the image
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.1)
+    plt.close()
+    buf.seek(0)
+    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    buf.close()
+
+    return image_base64
+
+def latex_to_image_handler(reqobj):
+    for image_in_reqobj in reqobj:
+        max_width = image_in_reqobj['width']
+        latex_text = image_in_reqobj['questionText']
+        if 'markupFormat' in image_in_reqobj and image_in_reqobj['markupFormat'] == 'latex':
+            image_base64 = latex_to_image_core(
+                latex_text,
+                fontsize=14,
+                dpi=100
+            )
+            image_in_reqobj['image_base64'] = image_base64
+    return reqobj
