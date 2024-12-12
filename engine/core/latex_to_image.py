@@ -359,16 +359,26 @@
 #             )
 #             image_in_reqobj['image_base64'] = image_base64
 #     return reqobj
+
 import matplotlib.pyplot as plt
 import base64,io,re,time
 from matplotlib import cm
 from matplotlib import font_manager
 
+def save_base64_to_image(base64_string, output_file_path):
+    # Decode the base64 string
+    image_data = base64.b64decode(base64_string)
+    
+    # Write the image data to a file
+    with open(output_file_path, 'wb') as image_file:
+        image_file.write(image_data)
+    print(f"Image saved to {output_file_path}")
+
 def latex_to_image_core(latex_expression, fontsize=16, dpi=100):
 
     # Calculate an approximate width and height based on the length of the LaTeX string
      # Load custom font
-    font_path = '/engine/gen_utils_files/frontend_fonts.ttf'  # Specify the path to your custom font
+    font_path = 'engine/gen_utils_files/frontend_fonts.ttf'  # Specify the path to your custom font
     prop = font_manager.FontProperties(fname=font_path)
     
     text_length = len(latex_expression)
@@ -389,11 +399,11 @@ def latex_to_image_core(latex_expression, fontsize=16, dpi=100):
     buf.seek(0)
     image_base64 = base64.b64encode(buf.read()).decode('utf-8')
     buf.close()
-
+        
     return image_base64
 
 def latex_formatter(latex_equation):
-# Regular expression to match the figure description and remove it
+    # Regular expression to match the figure description and remove it
     match = re.search(r'Figure Description: (.*)', latex_equation)
 
     if match:
@@ -433,8 +443,6 @@ def latex_formatter(latex_equation):
         print("No figure description found.")
         return latex_equation
 
-
-
 def latex_to_image_handler(reqobj):
     start_time = time.time()
     for image_in_reqobj in reqobj:
@@ -447,6 +455,7 @@ def latex_to_image_handler(reqobj):
                 fontsize=14,
                 dpi=100
             )
+            # save_base64_to_image(image_base64, "output.png")
             image_in_reqobj['image_base64'] = image_base64
     
     end_time = time.time()  # End the timer

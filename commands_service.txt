@@ -1,7 +1,10 @@
 docker run --env-file .env.dev -p 9000:8080 gen_ai_proxy_dev:latest
-DOCKER_BUILDKIT=1 docker build -t gen_ai_proxy_dev . -f Dockerfile.service --progress=plain
-aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 984498058219.dkr.ecr.ap-south-1.amazonaws.com
 
-docker tag gen_ai_proxy_dev:latest 984498058219.dkr.ecr.ap-south-1.amazonaws.com/gen_ai_proxy_dev:latest
+sudo dockerd ## command to start docker daemon
 
-docker push 984498058219.dkr.ecr.ap-south-1.amazonaws.com/gen_ai_proxy_dev:latest
+sudo DOCKER_BUILDKIT=1 docker build -t gen_ai_proxy_dev . -f Dockerfile.service --progress=plain
+aws ecr get-login-password --region ap-south-1 | sudo docker login --username AWS --password-stdin 984498058219.dkr.ecr.ap-south-1.amazonaws.com
+
+sudo docker tag gen_ai_proxy_dev:latest 984498058219.dkr.ecr.ap-south-1.amazonaws.com/gen_ai_proxy_dev:latest
+
+sudo docker push 984498058219.dkr.ecr.ap-south-1.amazonaws.com/gen_ai_proxy_dev:latest
