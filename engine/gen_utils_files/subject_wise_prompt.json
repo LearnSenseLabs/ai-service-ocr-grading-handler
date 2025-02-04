@@ -60,20 +60,6 @@
         "subjectId":1,
         "task":"ocr",
         "promptText":"",
-        "defaultLLM":"claude-3-5-sonnet-20240620"
-    },
-    {
-        "subjectName":"economics",
-        "subjectId":1,
-        "task":"ocr",
-        "promptText":"",
-        "defaultLLM":"gpt-4o"
-    },
-    {
-        "subjectName":"accountancy",
-        "subjectId":1,
-        "task":"ocr",
-        "promptText":"",
         "defaultLLM":"gpt-4o"
     }
 ]
