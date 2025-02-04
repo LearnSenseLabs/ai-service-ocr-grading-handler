@@ -372,7 +372,7 @@ def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, A
                 generated_question_type = que_wise_data["questionType"].lower()
             else:
                 generated_question_type = ''
-                
+            subject = que_wise_data['subject'].lower() if(que_wise_data.__contains__('subject')) else 'english'    
             if( (generated_question_type == "mcq")
                or(generated_question_type == "multipleChoice") or (generated_question_type == "multiplechoice")
                or (generated_question_type == "multiple choice")
@@ -383,7 +383,16 @@ def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, A
                 
                 option_index = 0
                 new_que_wise_data["options"] = []
-                new_que_wise_data['markUpFormat'] = 'text'
+                if(subject=="mathematics" or subject=='science' or subject=='physics' or subject=='chemistry' or subject=='biology'):
+                    if('`' in que_wise_data["question"]):
+                        new_que_wise_data['markupFormat'] = 'asciiMath'
+                    else:
+                        new_que_wise_data['markupFormat'] = 'text'
+                else:
+                    new_que_wise_data['questionText'] = que_wise_data["question"].replace('`', "'")
+                    new_que_wise_data['markupFormat'] = 'text'
+                # new_que_wise_data['markupFormat'] = 'asciiMath'  else 'text'
+                
                 # for options_data in q['options']:
                 for key, value in que_wise_data['options'][0].items():
                     # correct_option_index = 0
@@ -410,8 +419,16 @@ def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, A
                 new_que_wise_data["ans"] = que_wise_data["answer"]
             else:
                 new_que_wise_data['rubrics'] = []
-                subject = que_wise_data['subject'].lower() if(que_wise_data.__contains__('subject')) else 'english'
-                new_que_wise_data['markUpFormat'] = 'asciiMath' if(subject=="mathematics" or subject=='science' or subject=='physics' or subject=='chemistry' or subject=='biology') else 'text'
+                
+                if(subject=="mathematics" or subject=='science' or subject=='physics' or subject=='chemistry' or subject=='biology'):
+                    if('`' in que_wise_data["question"]):
+                        new_que_wise_data['markupFormat'] = 'asciiMath'
+                    else:
+                        new_que_wise_data['markupFormat'] = 'text'
+                else:
+                    new_que_wise_data['questionText'] = que_wise_data["question"].replace('`', "'")
+                    new_que_wise_data['markupFormat'] = 'text'
+                
                 for rubrics_data in que_wise_data['rubrics']:
                     new_que_wise_data["rubrics"].append({
                         "score": rubrics_data['marks'],
