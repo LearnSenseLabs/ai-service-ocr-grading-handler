@@ -3,9 +3,9 @@ import re
 import replicate
 import google.generativeai as genai
 
-from engine.core.latex_to_image import latex_to_image_handler
-from engine.core.llm_calling import calude_calling, gpt_calling, gpt_vision_calling
-from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gpt
+# from engine.core.latex_to_image import ascii_math_to_image_handler, latex_to_image_handler
+from engine.core.llm_calling import calude_calling, gemini_calling, gemini_vision_number_runner, gpt_calling, gpt_vision_calling
+from engine.core.llm_format_convertion import convert_gpt_to_claude, convert_gpt_to_gemini, convert_gpt_to_llamma, convert_normal_to_gemini_number, convert_normal_to_gpt
 from engine.core.ocr_llm_calling_modules import claude_vision_calling
 from engine.core.question_generation_handler import convert_question_format, question_generation
 from engine.gen_utils_files.utils import convert_rubric_to_string, find_data_in_string, get_prompt, mapping_model_with_name
@@ -25,6 +25,7 @@ llm_name_mapping = {
     "shozemi-gpt-latest":{"modelName":"gpt-4o","modelClass":"argumentativeEssayOcr"},
     "claude-vision-ocr":{"modelName":"claude-3-5-sonnet-20240620","modelClass":"claudeVisionOCR"},
     "ensamble-vision":{"modelName":"llama-13B-vision","modelClass":"visionEnsamble"},
+    "gemini-vision-number":{"modelName":"gemini-1.5-pro","modelClass":"geminiVisionNumber"},
     # "gpt-vision-noOcr":{"modelName":"gpt-4-vision-preview","modelClass":"gptVision"}
 }
 
@@ -33,25 +34,38 @@ def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instru
     ## here system_instruction is a string which is creating for grading not ocr...
     if(system_instruction==""):
         if(gradingPrompt=="default"):
-            if(os.getenv("SYSTEM_INSTRUCTION_DEFAULT")==None):
-                system_instruction ="### Instructions ### You are a teacher providing feedback on handwritten responses to assessment questions. The handwriting will be digitized by OCR and provided below. You will provide feedback on specific parts of the response ignoring spelling and grammatical mistakes, and clearly list every instance of student response which needs improvement with concrete examples of how to make it better. For every mistake, you will provide direct examples of how the student skill can be improved. don't meansion any thing about grammatical or spelling mistake### Your Feedback Style ###\\n\\n\\n  Be extremely concise and don't give flattering words. Be direct and to the point. Don't be rude, but don't be overly polite. Be straightforward and clear. give your feedback in 40 words, Maximum Score: "
-            else:
-                system_instruction = os.getenv("SYSTEM_INSTRUCTION_DEFAULT")
+            # if(os.getenv("SYSTEM_INSTRUCTION_DEFAULT")==None):
+            #     system_instruction ="### Instructions ### You are a teacher providing feedback on handwritten responses to assessment questions. The handwriting will be digitized by OCR and provided below. You will provide feedback on specific parts of the response ignoring spelling and grammatical mistakes, and clearly list every instance of student response which needs improvement with concrete examples of how to make it better. For every mistake, you will provide direct examples of how the student skill can be improved. don't meansion any thing about grammatical or spelling mistake### Your Feedback Style ###\\n\\n\\n  Be extremely concise and don't give flattering words. Be direct and to the point. Don't be rude, but don't be overly polite. Be straightforward and clear. give your feedback in 40 words, Maximum Score: "
+            # else:
+            system_instruction = """You are a teacher providing feedback on handwritten responses for assessment questions. Using a supportive tone, address the student in the first person, as a teacher would. Ignore spelling and grammatical mistakes and focus on specific parts of the response that need improvement. List every instance needing improvement along with concrete examples for enhancement. If score points are deducted, explicitly mention why and provide suggestions for improvement, never talk in vague terms be on point and give feedback on which you are confident in a polite way, and consider that you are given an OCR of handwritten response, and figure description will be there if a student draws some figure.
+            Do not ask students to verify things, give your view on the response, whether the given response follows rubrics or not, and if not how to improve upon it. If there is not any rubrics violation then encourage student to keep that level of performance.
+            # Feedback Style:
+                - Be concise and direct, so give feedback on which part is wrong or can be improved, and how it can be done.
+                - Always use bullet points for clarity and actionable feedback for quick and crisp feedback.
+                - Provide feedback with in 80 words.
+                - Maximum score: """
         elif(gradingPrompt=="expository-essay-ocr"):
             if(os.getenv("SYSTEM_INSTRUCTION_ESSAY")==None):
                 system_instruction = "You will grade a handwritten answer to a test question and provide constructive concrete feedback. How to give feedback:Show how to improve e.g. saying '...' will make answer more complete - Quote student writing and show how to improve e.g. you said '...' but you can say this instead '...' to clearly state your idea. - For incorrect answer, say how to write correct answer e.g. you said '...' but you need to say '...'. - For ambiguous answer, say '...' is not clear, you can say '...' for clarity. - For transition clarity, show how to improve: e.g. 'You can improve transition by writing ...'. - Give maximum 100 words feedback. - Ignore minor errors.Strictly only consider on matching criteria for scoring, out of Maximum Score:"
             else:
                 system_instruction = os.getenv("SYSTEM_INSTRUCTION_ESSAY")
-        elif(gradingPrompt=="ocr" or gradingPrompt=="claude-ocr"):
+        elif(gradingPrompt=="ocr" or gradingPrompt=="claude-ocr" or gradingPrompt=="gpt-ocr"):
             ## add subject wise prompt here for grading ...
-            if(os.getenv("SYSTEM_INSTRUCTION_DEFAULT")==None):
-                system_instruction ="### Instructions ### You are a teacher providing feedback on handwritten responses to assessment questions. The handwriting will be digitized by OCR and provided below. You will provide feedback on specific parts of the response ignoring spelling and grammatical mistakes, and clearly list every instance of student response which needs improvement with concrete examples of how to make it better. For every mistake, you will provide direct examples of how the student skill can be improved. don't meansion any thing about grammatical or spelling mistake### Your Feedback Style ###\\n\\n\\n  Be extremely concise and don't give flattering words. Be direct and to the point. Don't be rude, but don't be overly polite. Be straightforward and clear. give your feedback in 40 words, Maximum Score: "
-            else:
-                system_instruction = os.getenv("SYSTEM_INSTRUCTION_DEFAULT")
+            # if(os.getenv("SYSTEM_INSTRUCTION_DEFAULT")==None):
+                # system_instruction ="### Instructions ### You are a teacher providing feedback on handwritten responses to assessment questions. The handwriting will be digitized by OCR and provided below. You will provide feedback on specific parts of the response ignoring spelling and grammatical mistakes, and clearly list every instance of student response which needs improvement with concrete examples of how to make it better. For every mistake, you will provide direct examples of how the student skill can be improved. don't meansion any thing about grammatical or spelling mistake### Your Feedback Style ###\\n\\n\\n  Be extremely concise and don't give flattering words. Be direct and to the point. Don't be rude, but don't be overly polite. Be straightforward and clear. give your feedback in 40 words, Maximum Score: "
+            system_instruction = """You are a teacher providing feedback on handwritten responses for assessment questions. Using a supportive tone, address the student in the first person, as a teacher would. Ignore spelling and grammatical mistakes and focus on specific parts of the response that need improvement. List every instance needing improvement along with concrete examples for enhancement. If score points are deducted, explicitly mention why and provide suggestions for improvement, never talk in vague terms be on point and give feedback on which you are confident in a polite way, and consider that you are given an OCR of handwritten response, and figure description will be there if a student draws some figure.
+                Do not ask students to verify things, give your view on the response, whether the given response follows rubrics or not, and if not how to improve upon it. If there is not any rubrics violation then encourage student to keep that level of performance.
+                # Feedback Style:
+                    - Be concise and direct, so give feedback on which part is wrong or can be improved, and how it can be done.
+                    - Always use bullet points for clarity and actionable feedback for quick and crisp feedback.
+                    - Provide feedback with in 80 words.
+                    - Maximum score: """
+            # else:
+            #     system_instruction = os.getenv("SYSTEM_INSTRUCTION_DEFAULT")
         elif(gradingPrompt=="omr"):
             system_instruction = "You will grade a multiple choice question response with just telling whether given response is correct or not, don't provide any feedback on how to improve. Give the feedback in very brief. "
     if(scoring_criteria==""):
-        scoring_criteria = ",Scoring Criteria \n\n## The following must be in a JSON format with this schema:\\n\\n   { \\\"feedback\\\": Your feedback here in one paragraph of type string,\\n                        \\\"score\\\": Student Score,\\n                        \\\"maxScore\\\": Maximum Score }"
+        scoring_criteria = ',Scoring Criteria \n\n## The following must be in a JSON format with this schema:\\n\\n   { \\\"feedback\\\": Your feedback here, if there is math content then give it in asciimath between `` ,\\n                     \\\"score\\\": Student Score,\\n                      \\\"maxScore\\\": Maximum Score } , sample example:{"feedback":"response reasoning in bullet points","score":number,"maxScore":number}'
     if(system_instruction!=None):
         if(model_class=='gptVisionOCR' or model_class=='gptVisionMCQ'):
             system_instruction_final = system_instruction+scoring_criteria
@@ -82,14 +96,17 @@ def gen_ai_calling_proxy(reqobj,task=''):
         # print(question_json)
         return convert_question_format(question_json)
     elif(task=='latex_to_image'):
-        return latex_to_image_handler(reqobj)
-        # return reqobj
+        # return latex_to_image_handler(reqobj)
+        return reqobj
+    elif(task=='ascii_to_image'):
+        # return ascii_math_to_image_handler(reqobj)
+        return reqobj
     grading_prompt = reqobj['gradingPrompt'] if(reqobj.__contains__('gradingPrompt')) else 'default'
     if(grading_prompt=='expository-essay-ocr'):
         # model_name_sample = "gpt-vision-mcq"
         # model_name_sample = "gpt-ocr-vision"
         model_name_sample = "claude-vision-ocr"
-    elif(grading_prompt=='ocr' or grading_prompt=='OCR'):
+    elif(grading_prompt=='ocr' or grading_prompt=='OCR' or grading_prompt=='gpt-ocr'):
         model_name_sample = "gpt-ocr-vision"
     elif(grading_prompt=='gpt-grading-only'):
         model_name_sample = "gpt-4-latest"
@@ -97,6 +114,8 @@ def gen_ai_calling_proxy(reqobj,task=''):
         model_name_sample = "claude-vision-ocr"
     elif(grading_prompt=='argumentative-essay-ocr'):
         model_name_sample = "shozemi-gpt-latest"
+    elif(grading_prompt=='gemini-number'):
+        model_name_sample = "gemini-vision-number"
     else:
         # model_name_sample = reqobj['modelName'] if(reqobj.__contains__('modelName')) else "claude-latest"
         model_name_sample = reqobj['modelName'] if(reqobj['modelName']!='') else "gpt-4-latest"
@@ -146,7 +165,7 @@ def gen_ai_calling_proxy(reqobj,task=''):
             system_instruction = re.sub(r"\\\\", r"\\", system_instruction_temp)
             if(system_instruction==""):
                 system_instruction = "You will transcribe the English handwriting in the provided image exactly as it is written, without any modifications, corrections, or interpretations. The students are of a younger age and studying in Gujarat state. Keep the original structure, including all punctuation, capitalization, and line breaks, without altering any names, dates, or terms. If there are any non-text elements such as underlines, symbols, or figures, describe them briefly starting with Non-text element: in their respective position. Provide the output as a plain string, with no extra explanations or formatting, maintaining the exact order and structure of the text as it appears in the image. give it in the string format without any pretext, provide just the value"
-            scoring_criteria = ". If given image is blank(empty) please return 'given image is empty' string as value"
+            scoring_criteria = f".You are doing ocr of the student's answer, and here is the question to which the student responded: .{reqobj['questionInfo']['question']}. If given image is blank(empty) please return 'Empty Response' string as value"
             # system_instruction = "You will read the handwritting in the given image, write what you read in the image as it is, "
             # scoring_criteria = " give it in the string format as value"
         elif(model_class=='claudeVisionOCR'):
@@ -157,7 +176,8 @@ def gen_ai_calling_proxy(reqobj,task=''):
             system_instruction = re.sub(r"\\\\", r"\\", system_instruction_temp)
             if(system_instruction==""):
                 system_instruction = "You will transcribe the English handwriting in the provided image exactly as it is written, without any modifications, corrections, or interpretations. The students are of a younger age and studying in Gujarat state. Keep the original structure, including all punctuation, capitalization, and line breaks, without altering any names, dates, or terms. If there are any non-text elements such as underlines, symbols, or figures, describe them briefly starting with Non-text element: in their respective position. Provide the output as a plain string, with no extra explanations or formatting, maintaining the exact order and structure of the text as it appears in the image. give it in the string format without any pretext, provide just the value"
-            scoring_criteria = ". If given image is blank(empty) please return 'given image is empty' string as value"
+            
+            scoring_criteria = f".You are doing ocr of the student's answer, and here is the question to which the student responded: .{reqobj['questionInfo']['question']}. If given image is blank(empty) please return 'Empty Response' string as value"
             # scoring_criteria = " give it in the string format without any pretext, provide just the value"
                         
             ## updated prompt on oct-16-2024
@@ -181,12 +201,20 @@ def gen_ai_calling_proxy(reqobj,task=''):
         messages_vision = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer,maxScore=maxScore,
                                                  system_instruction=system_instruction,scoring_criteria=scoring_criteria,model_class=model_class,
                                                  gradingPrompt=grading_prompt,answerUrl=student_answer_url)
+    elif(model_class=='geminiVisionNumber'):
+        messages_number = reqobj
     else:
         if(model_class=='gptText' and student_answer==''):
             # system_instruction = os.getenv("SYSTEM_INSTRUCTION_EMPTY")
             system_instruction = "You are giving ideal response to the student who is not able to provide any answer for the given question, be gentle and explain correct answer to him in order to help him learn that topic well so in future he can answer similar type of question easily, and always provide 0(zero) as score, out of MaxScore: "
         else:
-            system_instruction = ""
+            system_instruction = """You are a teacher providing feedback on handwritten responses for assessment questions. Using a supportive tone, address the student in the first person, as a teacher would. Ignore spelling and grammatical mistakes and focus on specific parts of the response that need improvement. List every instance needing improvement along with concrete examples for enhancement. If score points are deducted, explicitly mention why and provide suggestions for improvement, never talk in vague terms be on point and give feedback on which you are confident in a polite way, and consider that you are given an OCR of handwritten response, and figure description will be there if a student draws some figure.
+            Do not ask students to verify things, give your view on the response, whether the given response follows rubrics or not, and if not how to improve upon it. If there is not any rubrics violation then encourage student to keep that level of performance.
+            # Feedback Style:
+                - Be concise and direct, so give feedback on which part is wrong or can be improved, and how it can be done.
+                - Always use bullet points for clarity and actionable feedback for quick and crisp feedback.
+                - Provide feedback with in 80 words.
+                - Maximum score: """
         messages = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer,maxScore=maxScore,system_instruction=system_instruction,gradingPrompt=grading_prompt)
         # print("messages: ",messages)
     # system    _prompt = messages[0]['systemPrompt']
@@ -214,26 +242,38 @@ def gen_ai_calling_proxy(reqobj,task=''):
         if(student_answer_ocr.lower()=='given image is empty'):
             return {"statusCode":200,"response":{"ocr":student_answer_ocr,"aiFeedback":"No answer provided","score":0,"maxScore":maxScore}}
         messages_gpt = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer_ocr,maxScore=maxScore,gradingPrompt=grading_prompt)
-        res_gpt = gpt_calling(messages_gpt,model_name_text)
+        # res_gpt = gpt_calling(messages_gpt,model_name_text)
+        messages_gemini = convert_gpt_to_gemini(convert_normal_to_gpt(messages_gpt))
+        res_gpt = gemini_calling(messages_gemini)
         res_gpt['response']['ocr'] = student_answer_ocr
         return res_gpt
-    elif(model_class=='gptOCR' or model_class=='gptVisionOCR' or model_class=='gptVisionMCQ'):
-        res_vision = gpt_vision_calling(messages_vision=messages_vision,model_name=model_name)
+    elif(model_class=='gptOCR' or model_class=='gptVisionOCR' or model_class=='gptVisionMCQ' or model_class=='claudeVisionOCR'):
+        
         # print(res_vision)
         # if(model_class=='gptVisionMCQ'):
         #     model_name_text = 'gpt-3.5-turbo'
         # else:
         model_name_text = 'gpt-4o'
-        student_answer_ocr = find_data_in_string(res_vision['response'])
-        messages_gpt = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer_ocr,maxScore=maxScore,gradingPrompt=grading_prompt)
+        # res_vision = gpt_vision_calling(messages_vision=messages_vision,model_name="gpt-4o")
+        # student_answer_ocr = find_data_in_string(res_vision['response'])
+        res_calude  = claude_vision_calling(user_image=student_answer_url,system_prompt=messages_vision['systemPrompt'])
+        # print("ocr response: ",res_calude['response'])
+        # student_answer_ocr = find_data_in_string(res_vision['response'])
+        student_answer_ocr = res_calude['response']
+        if(student_answer_ocr.lower()=='given image is empty'):
+            return {"statusCode":200,"response":{"ocr":student_answer_ocr,"aiFeedback":"No answer provided","score":0,"maxScore":maxScore}}
+        messages_gpt = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer_ocr,maxScore=maxScore,gradingPrompt="default")
         res_gpt = gpt_calling(messages_gpt,model_name_text)
+        # messages_gemini = convert_gpt_to_gemini(convert_normal_to_gpt(messages_gpt))
+        # res_gpt = gemini_calling(messages_gemini)
         res_gpt['response']['ocr'] = student_answer_ocr
         return res_gpt
     elif(model_class=='geminiText'):
         # gemini_key = os.getenv('GOOGLE_API_KEY')
-        reqobj_gemini = convert_gpt_to_gemini(convert_normal_to_gpt(messages))
+        reqobj_gemini = convert_gpt_to_gemini(convert_normal_to_gpt(messages_vision))
+        # print(reqobj_gemini)
         genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
+        model_name = "gemini-1.5-pro"
         # Create the model
         # See https://ai.google.dev/api/python/google/generativeai/GenerativeModel
         generation_config = {
@@ -256,7 +296,7 @@ def gen_ai_calling_proxy(reqobj,task=''):
 
         response = chat_session.send_message(reqobj_gemini['messages'][0]['parts'][0])
 
-        # print(response.text)
+        print("Gemini response: ",response.text)
             
         if(response.text is not None):
             gemini_response = json.loads(response.text)
@@ -269,6 +309,10 @@ def gen_ai_calling_proxy(reqobj,task=''):
             gemini_response = {"aiFeedback":"Gemini does not found answer","score":0,'maxScore':1}
             gemini_statusCode = 400
         return {"statusCode":gemini_statusCode,"response":gemini_response}
+    elif(model_class=='geminiVisionNumber'):
+        reqobj_gemini = convert_normal_to_gemini_number(messages_number)
+        response_number_list = gemini_vision_number_runner(reqobj_gemini['batchSize'],reqobj_gemini['base64Image'])
+        return response_number_list
     elif(model_class=='llamaText'):
         # print(messages)
         reqobj_llamma = convert_gpt_to_llamma(convert_normal_to_gpt(messages))

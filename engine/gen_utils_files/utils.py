@@ -105,7 +105,7 @@ def add_response_to_db(user_response,reqobj,task=''):
         else:
             student_answer_empty_flag = False
     else:    
-        if(student_answer_ocr=='' or student_answer_ocr.lower()=='given image is empty'):
+        if(student_answer_ocr=='' or student_answer_ocr.lower()=='Empty Response'):
             student_answer_empty_flag = True
         else:
             student_answer_empty_flag = False

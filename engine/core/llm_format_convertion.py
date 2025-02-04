@@ -184,3 +184,10 @@ def convert_normal_to_claude_vision(message, model_class="claude-vision"):
                 ]
             })
     return updated_claude_vision_data   
+
+def convert_normal_to_gemini_number(messages):
+    return_data = {
+        "base64_image": messages['encoded_image_base64'],
+        'batch_size': messages['batch_size']
+    }
+    return return_data

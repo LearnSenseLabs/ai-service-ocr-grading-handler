@@ -50,14 +50,14 @@ def message_handler(event, context):
         if (urlpath == "/generate"):
 
             reqobj = create_reqobj_scan(headers, event, "json")
-            # print("reqobj: ",reqobj)
+            # print("reqobj, I got: ",reqobj)
             response = {}
             ensamble_list = []
             reqobj_task = ''
             ## added support for multiple questions in one request processing like adding loop to process questions one by one...
             for reqobj_question_wise in reqobj:
-                if(os.environ['cloudWatch'] == "True"):
-                    print(reqobj_question_wise)
+                # if(os.environ['cloudWatch'] == "True"):
+                #     print(reqobj_question_wise)
                 if(reqobj_question_wise['modelName']=='ensamble-vision'):
                     ensamble_list.append(reqobj_question_wise)
                     reqobj_task = 'number_llm_prediction'
@@ -68,11 +68,15 @@ def message_handler(event, context):
                     try:
                         db_add_flag=add_response_to_db(response,reqobj_question_wise)
                         response_message = "question graded and database updated succesfully."
+                        # if(os.environ['cloudWatch'] == "True"):
+                        #     print("db_add_flag: ",db_add_flag," response_message: ",response_message)
                     except Exception as e:
                         raise Exception("Error in adding response to DB!")
-            if(reqobj_task=='number_llm_prediction'):
-                response=predict_llm_number(ensamble_list)
-                response_message = "question graded and database updated succesfully."
+            if(reqobj.__contains__('reqobj_task')):
+               if(reqobj['reqobj_task']=='number_llm_prediction'):
+                    response = predict_llm_number(reqobj)
+                    # response=predict_llm_number(ensamble_list)
+                    response_message = "question graded and database updated succesfully."
             # print(ensamble_list)
         elif(urlpath=="/generateQuestion"):
             reqobj_task = "question_generation"
@@ -89,6 +93,12 @@ def message_handler(event, context):
             if(os.environ['cloudWatch'] == "True"):
                 print(reqobj[0])
             response = gen_ai_calling_proxy(reqobj,task=reqobj_task)
+        elif(urlpath=="/asciiMathToImage"):
+            reqobj_task = "ascii_to_image"
+            reqobj = create_reqobj_scan(headers, event, reqobj_task)
+            if(os.environ['cloudWatch'] == "True"):
+                print(reqobj[0])
+            response = gen_ai_calling_proxy(reqobj,task=reqobj_task)
         else:
             raise Exception("Unsupported path!")
         
@@ -101,7 +111,7 @@ def message_handler(event, context):
                 },
                 "body": json.dumps({"feedback":response_message,"status":True,"generated_questions":response})
             }
-        elif(reqobj_task=='latex_to_image'):
+        elif(reqobj_task=='latex_to_image' or reqobj_task=='ascii_to_image'):
             return {
                 "statusCode": 200,
                 "headers": {
@@ -159,7 +169,7 @@ def create_reqobj_scan(headers, body, reqtype):
         ## to accoumulate multiple questions in one request
         
         # reqobj = json.loads(body['Records'][0]['body'])[0]
-    elif(reqtype=="question_generation" or reqtype=="latex_to_image"):
+    elif(reqtype=="question_generation" or reqtype=="latex_to_image" or reqtype=="ascii_to_image"):
         reqobj_body = json.loads(body['body'])
     else:
         raise Exception("Invalid request type!")
@@ -269,47 +279,47 @@ if __name__ == "__main__":
 #     "body": "{\"gradeLevel\":\"grade7\",\"subject\":\"Mathematics\",\"educationBoard\":\"CBSE\",\"topic\":\"Probabilty\",\"numberOfQuestions\":5,\"mcq\":true,\"openEnded\":true,\"userId\":\"66d176665d3a75527a7a161e\",\"contentType\":[\"mcq\",\"openEnded\"]}",
 #     "isBase64Encoded": False
 # }
-    # event = {
-    # "version": "2.0",
-    # "routeKey": "$default",
-    # "rawPath": "/latexToImage",
-    # "rawQueryString": "",
-    # "headers": {
-    #     "content-length": "263",
-    #     "x-amzn-tls-version": "TLSv1.3",
-    #     "x-forwarded-proto": "https",
-    #     "postman-token": "671e8da0-0a53-4124-afcd-e842a893d3fc",
-    #     "x-forwarded-port": "443",
-    #     "x-forwarded-for": "43.241.194.168",
-    #     "accept": "*/*",
-    #     "x-amzn-tls-cipher-suite": "TLS_AES_128_GCM_SHA256",
-    #     "x-amzn-trace-id": "Root=1-671fe1a6-1c356b76122244ed569fe31a",
-    #     "host": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws",
-    #     "content-type": "application/json",
-    #     "cache-control": "no-cache",
-    #     "accept-encoding": "gzip, deflate, br",
-    #     "user-agent": "PostmanRuntime/7.37.3"
-    # },
-    # "requestContext": {
-    #     "accountId": "anonymous",
-    #     "apiId": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw",
-    #     "domainName": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws",
-    #     "domainPrefix": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw",
-    #     "http": {
-    #         "method": "POST",
-    #         "path": "/latexToImage",
-    #         "protocol": "HTTP/1.1",
-    #         "sourceIp": "43.241.194.168",
-    #         "userAgent": "PostmanRuntime/7.37.3"
-    #     },
-    #     "requestId": "f243eb97-085d-4987-9f58-27e4249bd2f8",
-    #     "routeKey": "$default",
-    #     "stage": "$default",
-    #     "time": "28/Oct/2024:19:10:30 +0000",
-    #     "timeEpoch": 1730142630294
-    # },
-    # "body": "[{\n    \"queId\":\"demo-queId\",\n    \"questionText\":\"Simplifying numerator: $(3x+4)(2x-5)$    $= 6x^2 + 8x - 15x - 20$ (Applying distributive)    $= 6x^2 - 7x - 20$     $-1$ property)    Simplifying denominator: $(x^2-9)\",\n    \"markupFormat\":\"latex\",\n    \"width\":8\n}]",
-    # "isBase64Encoded": False
+#     event = {
+#     "version": "2.0",
+#     "routeKey": "$default",
+#     "rawPath": "/latexToImage",
+#     "rawQueryString": "",
+#     "headers": {
+#         "content-length": "263",
+#         "x-amzn-tls-version": "TLSv1.3",
+#         "x-forwarded-proto": "https",
+#         "postman-token": "671e8da0-0a53-4124-afcd-e842a893d3fc",
+#         "x-forwarded-port": "443",
+#         "x-forwarded-for": "43.241.194.168",
+#         "accept": "*/*",
+#         "x-amzn-tls-cipher-suite": "TLS_AES_128_GCM_SHA256",
+#         "x-amzn-trace-id": "Root=1-671fe1a6-1c356b76122244ed569fe31a",
+#         "host": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws",
+#         "content-type": "application/json",
+#         "cache-control": "no-cache",
+#         "accept-encoding": "gzip, deflate, br",
+#         "user-agent": "PostmanRuntime/7.37.3"
+#     },
+#     "requestContext": {
+#         "accountId": "anonymous",
+#         "apiId": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw",
+#         "domainName": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw.lambda-url.ap-south-1.on.aws",
+#         "domainPrefix": "4bf5c7dxjn3e3e6wrgxbypjexu0acnjw",
+#         "http": {
+#             "method": "POST",
+#             "path": "/latexToImage",
+#             "protocol": "HTTP/1.1",
+#             "sourceIp": "43.241.194.168",
+#             "userAgent": "PostmanRuntime/7.37.3"
+#         },
+#         "requestId": "f243eb97-085d-4987-9f58-27e4249bd2f8",
+#         "routeKey": "$default",
+#         "stage": "$default",
+#         "time": "28/Oct/2024:19:10:30 +0000",
+#         "timeEpoch": 1730142630294
+#     },
+#     "body": "[{\n    \"queId\":\"demo-queId\",\n    \"questionText\":\"Simplifying numerator: $(3x+4)(2x-5)$    $= 6x^2 + 8x - 15x - 20$ (Applying distributive)    $= 6x^2 - 7x - 20$     $-1$ property)    Simplifying denominator: $(x^2-9)\",\n    \"markupFormat\":\"latex\",\n    \"width\":8\n}]",
+#     "isBase64Encoded": False
 # }
 
 
@@ -436,6 +446,93 @@ if __name__ == "__main__":
 #     },
 #     "body": "{\"gradeLevel\":\"grade11\",\"subject\":\"Mathematics\",\"educationBoard\":\"CBSE\",\"topic\":\"vector geometry\",\"numberOfQuestions\":5,\"userId\":\"66d176665d3a75527a7a161e\",\"contentType\":[\"mcq\",\"openEnded\"]}",
 #     "isBase64Encoded": False
+# }
+
+
+#     event = {
+#     "Records": [
+#         {
+#             "messageId": "3853ad41-432a-4610-9a02-951f1eac003b",
+#             "receiptHandle": "AQEBOB4jSTjMJqAodnIjIfrps95PNzaudy3OTGG84jYToN3x6498dm5I6WWARcDe7hGtfJ6Qaov9347bGAlEokJ8iXm5GeaGYbZoECvl7zINHgAtQih+XaUcLfdiYdfOncAmSMrhUDhajlxFpKNdiz1rgFv/81CsZTTvSUU53m85uhEumQJPooAjLbP3wbyrxkdiS22KXeFTizXC1koSvdK2auGNsax2OjvAgPS0Hw/6cAgAO7Kb4F8c/3ASjeKZPNvCN8xv/cLyd+FQqRGa24NFQmikFCniV/EDFzfR6UvTDV45INydoXlkoS7ODqR2vjY9KSkTmEXlQIZZ0HjYrz3hhzoQS75wyp+B74dVepDlsFiAu68shKIcPgfckcd04I+y06nvGwOjenuSeJ997b1VqThVjdNwfZ8cVwv4WikMYEc=",
+#             "body": "[{\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"Draw and label a simple diagram of a plant cell, indicating at least five main parts.\", \"studentAnswer\": \"\", \"rubrics\": [{\"score\": 1, \"criteria\": \"Draw the overall rectangular or angular shape to represent the plant cell structure.\", \"rubricId\": \"S65LzCf8mHFHJY58kntqp\"}, {\"score\": 1, \"criteria\": \"Label 'Cell Wall' and 'Cell Membrane' accurately on the diagram.\", \"rubricId\": \"HuYp9gsuBnJX3V-thQksH\"}, {\"score\": 1, \"criteria\": \"Label the 'Nucleus' within the cell.\", \"rubricId\": \"O4Dp30gg6lj3jeJQVMH7T\"}, {\"score\": 1, \"criteria\": \"Label at least one 'Chloroplast' correctly.\", \"rubricId\": \"yCMyBbh7ERkNTgM6jlTb3\"}, {\"score\": 1, \"criteria\": \"Include and label a 'Vacuole' within the cell.\", \"rubricId\": \"LAKiOpQFYSjOslk7iczlD\"}], \"maxScore\": 5, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/dev/67723b4e6743128c5238b6fd/NzXaXEE9KqqUwDx0Vm9g4/ans_crop/9be0b200-e480-441f-a66b-f5dc8b2fb439.webp\"}, \"gradingPrompt\": \"gpt-ocr\", \"status\": \"processing\", \"subject\": \"biology\", \"scanId\": \"NzXaXEE9KqqUwDx0Vm9g4\", \"studentId\": \"8YeSUWX0E2x1AIXUcGt-O\", \"queId\": \"yL5pu_xM08rdQcgxEMdCs\"}, {\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"Illustrate a simple diagram of the human heart and label the four chambers.\", \"studentAnswer\": \"\", \"rubrics\": [{\"score\": 1, \"criteria\": \"Draw a simplified shape representing the human heart.\", \"rubricId\": \"uRG1s1IWfY6NOsc7q_LAH\"}, {\"score\": 1, \"criteria\": \"Label the 'Left Atrium' and 'Right Atrium' correctly on the top part of the heart.\", \"rubricId\": \"q0cFuOFmJFZKify6X8ZaL\"}, {\"score\": 1, \"criteria\": \"Label the 'Left Ventricle' on the bottom part of the heart.\", \"rubricId\": \"VN0yTFiZzsvfp0v3RhPyd\"}, {\"score\": 1, \"criteria\": \"Label the 'Right Ventricle' on the bottom part of the heart.\", \"rubricId\": \"yazdHyRW3j86edNS6sazY\"}], \"maxScore\": 4, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/dev/67723b4e6743128c5238b6fd/NzXaXEE9KqqUwDx0Vm9g4/ans_crop/c0e6b38c-e412-4692-8379-aa4f98548c62.webp\"}, \"gradingPrompt\": \"gpt-ocr\", \"status\": \"processing\", \"subject\": \"biology\", \"scanId\": \"NzXaXEE9KqqUwDx0Vm9g4\", \"studentId\": \"8YeSUWX0E2x1AIXUcGt-O\", \"queId\": \"v3QGHK5Arv4jc_54io4vy\"}]",
+#             "attributes": {
+#                 "ApproximateReceiveCount": "1",
+#                 "AWSTraceHeader": "Root=1-67736fff-4efef9a5179d93ad3883767f;Parent=553750f7e8d7e508;Sampled=0;Lineage=1:e9c0ad2b:0",
+#                 "SentTimestamp": "1735618568222",
+#                 "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+#                 "ApproximateFirstReceiveTimestamp": "1735618568223"
+#             },
+#             "messageAttributes": {},
+#             "md5OfBody": "f289000c7d6ff45c423323d844d62e47",
+#             "eventSource": "aws:sqs",
+#             "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-staging",
+#             "awsRegion": "ap-south-1"
+#         }
+#     ]
+# }
+#     event = {
+#     "Records": [
+#         {
+#             "messageId": "eeef11e1-54b4-48bd-88c5-59e21d7e9a03",
+#             "receiptHandle": "AQEB3UxuQh8S7kMDFZEYkHndB5mQILSi5Q91IpeiKtBr+T5TwT/uw25TdPnDo0PHqfio4Xl4RSORS2nOU6rfq2GKH0LgEQUrGGaAlwm3zIfn6OrVop2Bd4RGTkmvB+OWETm/yPLLaQq3rfCgG3VdXlsksZcmjujnOh+qd+v8afUGVD4ixvct6/jNCn+qx9nxOwpseXr5pqjVWhca0am/Bv00oMbP7u9xIfIOlOqfLlvQLxkd47rM9wLtKi8QHN2ifLWl1Jx48nV0qZqU4Q4oSBQG1U6ZOJ7neQx6vgAIHhdhG++bd+eMB2v/V8MfCRiHWql+TBEqsWJAkA8ujnRlcSsj7aaNM24vpYqlePfqrHJ2tt8BdS8k1eUnTtO7zpNwxvlm7X7spBnYpAGJC3M4vgsymaXEA+IqsPwTgGw+WC2kh4s=",
+#             "body": "[{\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"Write the following using numbers, literals and signs of basic operations:\\n(i) The sum of 6 and x.\\n(ii) 3 more than a number y.\\n(iii) One-third of a number x.\\n(iv) One-half of the sum of number x and y.\\n(v) Number y less than a number 7.\\n(vi) 7 taken away from x\\n(vii) 2 less than the quotient of x and y\\n(viii)4 times x taken away from one-third of y \\n(ix) Quotient of x  by 3 is multiplied by y\", \"studentAnswer\": \"\", \"rubrics\": [{\"rubricId\": \"8JYmHd1qJD9SXhm5ri4v_\", \"score\": 1, \"criteria\": \"(i) The sum of 6 and x can be written as 6 + x\"}, {\"rubricId\": \"4ca798df-a174-4357-9b58-67d1755c4f96\", \"score\": 1, \"criteria\": \"(ii) 3 more than a number y can be written as y + 3\"}, {\"rubricId\": \"9885fa06-0cff-438c-a9b1-107b5cf18de3\", \"score\": 1, \"criteria\": \"(iii) One-third of a number x can be written as x/3\"}, {\"rubricId\": \"a26a1c10-1379-4ea7-b67d-effd75325e2c\", \"score\": 1, \"criteria\": \"(iv) One-half of the sum of number x and y can be written as (x + y)/ 2\"}, {\"rubricId\": \"ec18b93b-c804-408a-b868-c5a49feeddf5\", \"score\": 1, \"criteria\": \"(v) Number y less than a number 7 can be written as 7 \\u2013 y\"}, {\"rubricId\": \"79d0f99f-9783-49d4-a00f-388c61e18df1\", \"score\": 1, \"criteria\": \"(vi) 7 taken away from x can be written as x \\u2013 7\"}, {\"rubricId\": \"de7355d1-8715-4df6-94f7-8caff6649210\", \"score\": 1, \"criteria\": \"(vii) 2 less than the quotient of x and y can be written as x/y \\u2013 2\"}, {\"rubricId\": \"46324878-718c-495e-b6f5-f2518049443b\", \"score\": 1, \"criteria\": \"(viii) 4 times x taken away from one-third of y can be written as y/3 \\u2013 4x\"}, {\"rubricId\": \"ad7d4c4f-1035-42fd-9e48-c8cc0f8271d7\", \"score\": 1, \"criteria\": \"(ix) Quotient of x by 3 is multiplied by y can be written as xy/3\"}], \"maxScore\": 9, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/dev/6769554bb092531205d8c0b7/iAiqUPVgLK-ce1LDMBp3L/ans_crop/247f322a-0033-4326-876d-1fe2c436bae0.webp\"}, \"gradingPrompt\": \"gpt-ocr\", \"status\": \"processing\", \"subject\": \"mathematics\", \"scanId\": \"iAiqUPVgLK-ce1LDMBp3L\", \"studentId\": \"hGncUeqVbUkjTWfBbgNbE\", \"queId\": \"lmDAi9xiVMxm2INrzcTHA\"}, {\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"Think of a number. Multiply by 5. Add 6 to the result. Subtract y from this result. What is the result?\", \"studentAnswer\": \"\", \"rubrics\": [{\"rubricId\": \"VxPSBwXPtHw4xz77H4uAZ\", \"score\": 1, \"criteria\": \"Firstly assume a number and then operate give task in given order in question. Finally the expression should be like: 5x + 6 \\u2013 y\"}], \"maxScore\": 1, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/dev/6769554bb092531205d8c0b7/iAiqUPVgLK-ce1LDMBp3L/ans_crop/418cc8c5-8f82-4019-bc65-48d885290ac6.webp\"}, \"gradingPrompt\": \"gpt-ocr\", \"status\": \"processing\", \"subject\": \"mathematics\", \"scanId\": \"iAiqUPVgLK-ce1LDMBp3L\", \"studentId\": \"hGncUeqVbUkjTWfBbgNbE\", \"queId\": \"eXezjUFaDJnbE4dVtCLzi\"}]",
+#             "attributes": {
+#                 "ApproximateReceiveCount": "1",
+#                 "AWSTraceHeader": "Root=1-67737874-420342481a14da1a6009a4f5;Parent=7481d5209b99bb7d;Sampled=0;Lineage=1:e9c0ad2b:0",
+#                 "SentTimestamp": "1735620732600",
+#                 "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+#                 "ApproximateFirstReceiveTimestamp": "1735620732605"
+#             },
+#             "messageAttributes": {},
+#             "md5OfBody": "7dd0469115d4470ab684da50f8d2e832",
+#             "eventSource": "aws:sqs",
+#             "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-staging",
+#             "awsRegion": "ap-south-1"
+#         }
+#     ]
+# }
+
+#     event = {
+#     "Records": [
+#         {
+#             "messageId": "6b5574d5-f2d1-4a0c-a663-682e2557369f",
+#             "receiptHandle": "AQEBPZ/ti3ELmm/gtk/KTIMHQ3U7iEpDl8FCI/9MwqfhAQd2vJWdWI0eicEVAJKclWPHhHKoKPL3wsxFAFXXD9wbIH8gX9miymVkDk8C4Xg/7Qd9mdyvgJIqhbMZGJyO5Lc8zxNb8Kao4GGfLikrYX6eLyoBBkntusT/6cwOypk5WFJc3+2Swj57I3DKyMMffaXfo1eStARmS4yKloY9psqPOKUy0hOtUnhcP+d/bMMTpkB1nYdZ0H6XGavqI1WPT+fK7nKB7rD1EpLHO+//QtYRpS3pMIRz98Rf3RJw6k2Ue4JElJ+7Vbj3OB2ytIfQpUPDqPRmvUlJtO6hSoaWmeRFCzuawaaam4iCfj+nlkcRDPFdxeG0UCQiiw9kWrXdC8pqW6V90fQ88Gl9BCyeXPJ/HUdC7ccbYNqoXcd7dTwvQFY=",
+#             "body": "[{\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"Calculate the integral of the function `f(x) = 3x^2 + 2x + 1` with respect to `x`.\", \"studentAnswer\": \"\", \"rubrics\": [{\"score\": 1, \"criteria\": \"Correct integration of `3x^2` resulting in `x^3`.\", \"rubricId\": \"UkfBFgSiYnHedL7FS9Gg1\"}, {\"score\": 1, \"criteria\": \"Correct integration of `2x` resulting in `x^2`.\", \"rubricId\": \"pEhxdXOK7a-soYpUOJebW\"}, {\"score\": 1, \"criteria\": \"Correct integration of `1` resulting in `x`. Including constant of integration `C`.\", \"rubricId\": \"bzxC3d4nyhCxwFD5-W89p\"}], \"maxScore\": 3, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/dev/676e3a071ef13ed9f02496cb/IRV6ovpsw5qjijUnuIFKd/ans_crop/8c7aceb6-ecfc-4aa0-8e55-e445f260aa0c.webp\"}, \"gradingPrompt\": \"gpt-ocr\", \"status\": \"processing\", \"subject\": \"mathematics\", \"scanId\": \"IRV6ovpsw5qjijUnuIFKd\", \"studentId\": \"8YeSUWX0E2x1AIXUcGt-O\", \"queId\": \"HXE_Z6-9PzJtCvGrjiVSL\"}, {\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"What is the value of `int 2x dx` from `0` to `3`?\", \"studentAnswer\": \"\", \"rubrics\": [{\"score\": 1, \"criteria\": \"Correct indefinite integration of `2x` to obtain `x^2`.\", \"rubricId\": \"sj8lKBY4sxxOsWA3TEFHq\"}, {\"score\": 1, \"criteria\": \"Correct evaluation of the definite integral from `0` to `3`.\", \"rubricId\": \"g8BIoUmlBYQ24l3LPdLew\"}], \"maxScore\": 2, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/dev/676e3a071ef13ed9f02496cb/IRV6ovpsw5qjijUnuIFKd/ans_crop/0137112a-38d8-42a8-afaa-0bf3c48c93dc.webp\"}, \"gradingPrompt\": \"gpt-ocr\", \"status\": \"processing\", \"subject\": \"mathematics\", \"scanId\": \"IRV6ovpsw5qjijUnuIFKd\", \"studentId\": \"8YeSUWX0E2x1AIXUcGt-O\", \"queId\": \"ibHCtx56cdZSB7yVAWwlT\"}]",
+#             "attributes": {
+#                 "ApproximateReceiveCount": "1",
+#                 "AWSTraceHeader": "Root=1-67767fe0-5e2a87e26cdb5a2b72203f59;Parent=1a44e18ee6c2f680;Sampled=0;Lineage=1:e9c0ad2b:0",
+#                 "SentTimestamp": "1735819239352",
+#                 "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+#                 "ApproximateFirstReceiveTimestamp": "1735819239357"
+#             },
+#             "messageAttributes": {},
+#             "md5OfBody": "35c3446d826ba2d6f9679708cadb4b40",
+#             "eventSource": "aws:sqs",
+#             "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-staging",
+#             "awsRegion": "ap-south-1"
+#         }
+#     ]
+# }
+#     event = {
+#     "Records": [
+#         {
+#             "messageId": "e5a8b74c-f43e-46c1-ba32-3f3dd6a27bcb",
+#             "receiptHandle": "AQEBgzder8JwZWfV/xjqFyJI1fg7tePhSFWNBmTe5dqx46wzJ+YjjqJbG8XWt7IFmC+k2BrByKhUsotdILco1OaiE03TG7IJpTapfFmVY40OFNKXY/RsBaXiaHGEdvHeV932H3N5jy/e1Qlkjv7vc7/Rs3/rQoSfRbdX2SFHN1ojVZOcRNtXNVO58p0nftpC1Ei9lZZq4Y8jiGm44fXFCOfgPt/V3xlN2F89TutoA1IpAGoyifdcpgEgTZZVxVSBCTRxFbUZsLdaL+G1xjHs9zoOurBbsoQ6UdYSHrkg7kwPwCA2ZNRnkU/lUz7jhLldLN/8Ni6GBXt3kJR118cAGWVPRoJb49tcttAja4ueGHM/2AeHsIV7QMvydXNCktY1qaVh/WkIjIFHV9xycFhjRjmcDCLjizGIwaRyCWLVfCgtoGo=",
+#             "body": "[{\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"A rectangle has a perimeter of `66` meters. If the length of the rectangle is `3` meters more than twice the width, find the dimensions of the rectangle.\", \"studentAnswer\": \"\", \"rubrics\": [{\"score\": 1, \"criteria\": \"Correctly set up the equation for perimeter using given relationship: `2(l + w) = 66` and `l = 2w + 3`.\", \"rubricId\": \"7fDix0aGaYUAL0waaibLi\"}, {\"score\": 1, \"criteria\": \"Solve for one variable in terms of the other correctly and substitute back.\", \"rubricId\": \"ccEfrh8s8GCU-NPalpkQN\"}, {\"score\": 1, \"criteria\": \"Calculate correct dimensions of the rectangle: length = `23` meters, width = `10` meters.\", \"rubricId\": \"5bLfCJ-vlk6fDzcobyr_s\"}], \"maxScore\": 3, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/master/675185e99717e314b906e9bf/flt4neVScWnbN9hqqUKgQ/ans_crop/14f2d30f-2ce0-4aea-a659-088c992cb245.webp\"}, \"gradingPrompt\": \"gpt-ocr\", \"status\": \"processing\", \"subject\": \"mathematics\", \"scanId\": \"flt4neVScWnbN9hqqUKgQ\", \"studentId\": \"NmIZca-Ft1MXU1fNnvAhk\", \"queId\": \"us_uH89TkF-SlmMZxrT5Y\"}, {\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"The area of a trapezium is `144` square cm. If the two parallel sides are `12` cm and `20` cm, find the height of the trapezium.\", \"studentAnswer\": \"\", \"rubrics\": [{\"score\": 1, \"criteria\": \"Correctly set up the area formula for a trapezium: `(1/2) * (a + b) * h = 144`.\", \"rubricId\": \"HMH-HxsWWFbvS54Q9p2hr\"}, {\"score\": 1, \"criteria\": \"Solve for the height correctly using given area and side lengths.\", \"rubricId\": \"bWxCQUINSG71cTzbWWK3L\"}], \"maxScore\": 2, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/master/675185e99717e314b906e9bf/flt4neVScWnbN9hqqUKgQ/ans_crop/374c7031-7033-40fe-bf4b-35e4d80c7739.webp\"}, \"gradingPrompt\": \"gpt-ocr\", \"status\": \"processing\", \"subject\": \"mathematics\", \"scanId\": \"flt4neVScWnbN9hqqUKgQ\", \"studentId\": \"NmIZca-Ft1MXU1fNnvAhk\", \"queId\": \"Rf924iEosCR93MP6Shqw0\"}, {\"modelName\": \"gpt-ocr-vision\", \"questionInfo\": {\"question\": \"Find the angle `x` if `sin(x)` = `0.5`. Assume `x` is between `0` and `360` degrees.\", \"studentAnswer\": \"\", \"rubrics\": [{\"score\": 1, \"criteria\": \"Identify the reference angle correctly using the value of `sin(x) = 0.5`.\", \"rubricId\": \"k2MDBYI0PeGCde_uefQlR\"}, {\"score\": 1, \"criteria\": \"Calculate the correct angles `x = 30 degrees` and `x = 150 degrees`.\", \"rubricId\": \"SYTaeH3fRdd43E1ehNfp1\"}], \"maxScore\": 2, \"studentAnswerUrl\": \"https://smartpaper-ai-service-crops.s3.ap-south-1.amazonaws.com/master/675185e99717e314b906e9bf/flt4neVScWnbN9hqqUKgQ/ans_crop/f994d81c-25e1-4e20-9f2e-0a2249a90a7e.webp\"}, \"gradingPrompt\": \"gpt-ocr\", \"status\": \"processing\", \"subject\": \"mathematics\", \"scanId\": \"flt4neVScWnbN9hqqUKgQ\", \"studentId\": \"NmIZca-Ft1MXU1fNnvAhk\", \"queId\": \"JHrS3N-2guiYbPRPZ72dE\"}]",
+#             "attributes": {
+#                 "ApproximateReceiveCount": "1",
+#                 "AWSTraceHeader": "Root=1-677d79cd-255afc964a36656421d3f599;Parent=6ad664af82b9e2d5;Sampled=0;Lineage=1:5625e7f4:0",
+#                 "SentTimestamp": "1736276433637",
+#                 "SenderId": "AIDA6KOFIGPVZCQQML6H3",
+#                 "ApproximateFirstReceiveTimestamp": "1736276433638"
+#             },
+#             "messageAttributes": {},
+#             "md5OfBody": "170fd63e80cf71befbd6adfa7195b339",
+#             "eventSource": "aws:sqs",
+#             "eventSourceARN": "arn:aws:sqs:ap-south-1:984498058219:ai-serivce-llm-calling-queue-prod",
+#             "awsRegion": "ap-south-1"
+#         }
+#     ]
 # }
 
     event = {}
