@@ -360,105 +360,146 @@
 #             image_in_reqobj['image_base64'] = image_base64
 #     return reqobj
 
-import matplotlib.pyplot as plt
-import base64,io,re,time
-from matplotlib import cm
-from matplotlib import font_manager
 
-def save_base64_to_image(base64_string, output_file_path):
-    # Decode the base64 string
-    image_data = base64.b64decode(base64_string)
+########################### Final version ##########################################
+
+# import matplotlib.pyplot as plt
+# import base64,io,re,time
+# import numpy as np
+# import cv2
+# from matplotlib import cm
+# from matplotlib import font_manager
+
+# def save_base64_to_image(base64_string, output_file_path):
+#     # Decode the base64 string
+#     image_data = base64.b64decode(base64_string)
     
-    # Write the image data to a file
-    with open(output_file_path, 'wb') as image_file:
-        image_file.write(image_data)
-    print(f"Image saved to {output_file_path}")
+#     # Write the image data to a file
+#     with open(output_file_path, 'wb') as image_file:
+#         image_file.write(image_data)
+#     print(f"Image saved to {output_file_path}")
 
-def latex_to_image_core(latex_expression, fontsize=16, dpi=100):
+# def ascii_to_latex(text):
+#     def convert_to_mathtext(match):
+#         math_expr = match.group(1)
+#         return f"${math_expr}$"  # Convert to MathText format
 
-    # Calculate an approximate width and height based on the length of the LaTeX string
-     # Load custom font
-    font_path = 'engine/gen_utils_files/frontend_fonts.ttf'  # Specify the path to your custom font
-    prop = font_manager.FontProperties(fname=font_path)
+#     combined_text = re.sub(r"`([^`]+)`", convert_to_mathtext, text)
     
-    text_length = len(latex_expression)
-    width = 6 + (text_length / 150)  # Adjust the divisor for scaling the width
-    # print(width)
-    height = 1  # Keep height fixed
+#     return combined_text
 
-    # Set up the plot with dynamic figure size
-    fig, ax = plt.subplots(figsize=(width, height))  # Adjust the size dynamically
-    ax.text(0, 1, f"{latex_expression}", fontsize=fontsize, ha='left', va='center',fontproperties=prop)
+# def latex_to_image_core(latex_expression, fontsize=16, dpi=100):
 
-    ax.axis('off')
+#     # Calculate an approximate width and height based on the length of the LaTeX string
+#      # Load custom font
+#     font_path = 'engine/gen_utils_files/frontend_fonts.ttf'  # Specify the path to your custom font
+#     prop = font_manager.FontProperties(fname=font_path)
     
-    # Save the image
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.1)
-    plt.close()
-    buf.seek(0)
-    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
-    buf.close()
+#     text_length = len(latex_expression)
+#     width = (6 + (text_length / 150))*1  # Adjust the divisor for scaling the width
+#     # print(width)
+#     height = 1  # Keep height fixed
+
+#     # Set up the plot with dynamic figure size
+#     fig, ax = plt.subplots(figsize=(width, height))  # Adjust the size dynamically
+#     ax.text(0, 1, f"{latex_expression}", fontsize=fontsize, ha='left', va='center',fontproperties=prop)
+
+#     ax.axis('off')
+    
+#     # Save the image
+#     buf = io.BytesIO()
+#     plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.1)
+#     plt.close()
+#     nparr = np.frombuffer(buf.getvalue(), np.uint8)
+#     image = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)  # Read the image from buffer
+#     img_height, img_width = image.shape[:2]  # Get dimensions (height, width)
+#     buf.seek(0)
+#     image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+#     buf.close()
         
-    return image_base64
+#     return image_base64,img_width,img_height
 
-def latex_formatter(latex_equation):
-    # Regular expression to match the figure description and remove it
-    match = re.search(r'Figure Description: (.*)', latex_equation)
+# def latex_formatter(latex_equation):
+#     # Regular expression to match the figure description and remove it
+#     match = re.search(r'Figure Description: (.*)', latex_equation)
 
-    if match:
-        figure_description = match.group(1)
-        # Remove the figure description from the main text
-        text_without_description = latex_equation.replace(match.group(0), '').strip()
+#     if match:
+#         figure_description = match.group(1)
+#         # Remove the figure description from the main text
+#         text_without_description = latex_equation.replace(match.group(0), '').strip()
 
-        # Function to add new lines after 80 characters in the figure description
-        def add_new_lines_to_description(description, line_length=60):
-            words = description.split(' ')
-            current_line = ''
-            result = []
-            # print(words)
-            for word in words:
-                if len(current_line + ' ' + word) <= line_length:
-                    current_line += ' ' + word if current_line else word
-                else:
-                    result.append(current_line)
-                    current_line = word
+#         # Function to add new lines after 80 characters in the figure description
+#         def add_new_lines_to_description(description, line_length=60):
+#             words = description.split(' ')
+#             current_line = ''
+#             result = []
+#             # print(words)
+#             for word in words:
+#                 if len(current_line + ' ' + word) <= line_length:
+#                     current_line += ' ' + word if current_line else word
+#                 else:
+#                     result.append(current_line)
+#                     current_line = word
 
-            # Add the last line
-            if current_line:
-                result.append(current_line)
+#             # Add the last line
+#             if current_line:
+#                 result.append(current_line)
 
-            return '\n'.join(result)
+#             return '\n'.join(result)
 
-        # Break the figure description into lines
-        # print(figure_description)
-        formatted_description = add_new_lines_to_description("Figure Description: "+figure_description)
+#         # Break the figure description into lines
+#         # print(figure_description)
+#         formatted_description = add_new_lines_to_description("Figure Description: "+figure_description)
 
-        # Combine the formatted text with the new description
-        final_text = f"{text_without_description}\n\n {formatted_description}"
+#         # Combine the formatted text with the new description
+#         final_text = f"{text_without_description}\n {formatted_description}"
 
-        print(final_text)
-        return final_text
-    else:
-        print("No figure description found.")
-        return latex_equation
+#         print(final_text)
+#         return latex_equation
+#     else:
+#         print("No figure description found.")
+#         return latex_equation
 
-def latex_to_image_handler(reqobj):
-    start_time = time.time()
-    for image_in_reqobj in reqobj:
-        max_width = image_in_reqobj['width']
-        latex_text = image_in_reqobj['questionText']
-        if 'markupFormat' in image_in_reqobj and image_in_reqobj['markupFormat'] == 'latex':
-            formated_latex_text = latex_formatter(latex_text)
-            image_base64 = latex_to_image_core(
-                formated_latex_text,
-                fontsize=14,
-                dpi=100
-            )
-            # save_base64_to_image(image_base64, "output.png")
-            image_in_reqobj['image_base64'] = image_base64
+# def latex_to_image_handler(reqobj):
+#     start_time = time.time()
+#     for image_in_reqobj in reqobj:
+#         max_width = image_in_reqobj['width'] if('width' in image_in_reqobj) else 150
+#         latex_text = image_in_reqobj['questionText']
+#         if 'markupFormat' in image_in_reqobj and image_in_reqobj['markupFormat'] == 'latex':
+#             formated_latex_text = latex_formatter(latex_text)
+#             image_base64,image_width,image_height = latex_to_image_core(
+#                 formated_latex_text,
+#                 fontsize=15,
+#                 dpi=300
+#             )
+#             # save_base64_to_image(image_base64, "output_new.png")
+#             image_in_reqobj['image_base64'] = image_base64
+#             image_in_reqobj['imageWidth'] = image_width
+#             image_in_reqobj['imageHeight'] = image_height
     
-    end_time = time.time()  # End the timer
-    elapsed_time = end_time - start_time  # Calculate the elapsed time
-    print(f"Time taken for image generation: {elapsed_time:.4f} seconds")
-    return reqobj
+#     end_time = time.time()  # End the timer
+#     elapsed_time = end_time - start_time  # Calculate the elapsed time
+#     print(f"Time taken for image generation: {elapsed_time:.4f} seconds")
+#     return reqobj
+
+# def ascii_math_to_image_handler(reqobj):
+#     start_time = time.time()
+#     for image_in_reqobj in reqobj:
+#         max_width = image_in_reqobj['width'] if('width' in image_in_reqobj) else 150
+#         latex_text = image_in_reqobj['questionText']
+#         if 'markupFormat' in image_in_reqobj and image_in_reqobj['markupFormat'] == 'asciiMath':
+#             formated_latex_text = ascii_to_latex(latex_text)
+#             image_base64,image_width,image_height = latex_to_image_core(
+#                 formated_latex_text,
+#                 fontsize=15,
+#                 dpi=300
+#             )
+#             # save_base64_to_image(image_base64, "output_ascii.png")
+#             image_in_reqobj['image_base64'] = image_base64
+#             image_in_reqobj['imageWidth'] = image_width
+#             image_in_reqobj['imageHeight'] = image_height
+    
+#     end_time = time.time()  # End the timer
+#     elapsed_time = end_time - start_time  # Calculate the elapsed time
+#     print(f"Time taken for image generation: {elapsed_time:.4f} seconds")
+    # return reqobj
