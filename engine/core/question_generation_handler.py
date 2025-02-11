@@ -325,13 +325,17 @@ def question_generation(input_data: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def size_getter_from_marks(marks):
     if(marks == 1):
-        return "1/8"
+        return 2
+        # return "1/8"
     elif(marks == 2):
-        return "1/4"
+        return 5
+        # return "1/4"
     elif(marks == 3):
-        return "1/3"
+        return 7
+        # return "1/3"
     else:
-        return "1/2"
+        return 10
+        # return "1/2"
 
 def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
@@ -357,7 +361,8 @@ def convert_question_format(questions: List[Dict[str, Any]]) -> List[Dict[str, A
             "lineSpacing": 20,
             "lineColor": '#828282',
             "aiGrading": True,
-            "size": size_getter_from_marks(que_wise_data["marks"]),
+            # "size": size_getter_from_marks(que_wise_data["marks"]),
+            "lines":size_getter_from_marks(que_wise_data["marks"]),
             "questionId": generate(),
             "answerBoxId": generate(), 
             "settings": 4,
