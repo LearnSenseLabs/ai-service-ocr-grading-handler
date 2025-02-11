@@ -5,7 +5,7 @@ import google.generativeai as genai
 from google.ai.generativelanguage_v1beta.types import content
 
 from engine.core.llm_format_convertion import convert_normal_to_gpt, convert_normal_to_gpt_vision
-from engine.gen_utils_files.utils import find_data_in_string
+from engine.gen_utils_files.utils import assign_rubric_id_to_response, find_data_in_string
 
 def gpt_vision_calling(messages_vision,model_name='gpt-4-vision-preview'):
     api_key = os.getenv("OPENAI_API_KEY")
@@ -66,10 +66,17 @@ def gpt_calling(messages,model_name='gpt-4o'):
             response = response.json()
             # print("output: ",response)
             response_json = json.loads(response["choices"][0]["message"]["content"])
+            # gpt_return_json = {
+            #     "aiFeedback":response_json["overallFeedback"],
+            #     "score":float(response_json["score"]),
+            #     "maxScore":float(response_json["maxScore"])
+            # }
+            rubricWiseResponse,calculated_score,max_score = assign_rubric_id_to_response(rubric_json=messages["rubricJson"],response_json=response_json["rubricWiseResponse"])
             gpt_return_json = {
-                "aiFeedback":response_json["feedback"],
-                "score":float(response_json["score"]),
-                "maxScore":float(response_json["maxScore"])
+                "aiFeedback":response_json["overallFeedback"],
+                "score":calculated_score,
+                "maxScore":max_score,
+                "rubricWiseResponse":rubricWiseResponse
             }
             return {"response":gpt_return_json,"statusCode":200}
         elif response.status_code == 503:

@@ -90,7 +90,7 @@ def add_response_to_db(user_response,reqobj,task=''):
     student_answer_aiFeedback = field_exist_or_not(user_response,'','aiFeedback')
     if(student_answer_aiFeedback==''):
         student_answer_aiFeedback = field_exist_or_not(user_response,'','feedback')
-    
+    rubric_wise_response = field_exist_or_not(user_response,[],'rubricWiseResponse')
     ## desciding the flags value based on the score and maxScore
     if(student_answer_score==student_answer_maxScore):
         student_answer_correct_flag = True
@@ -117,6 +117,7 @@ def add_response_to_db(user_response,reqobj,task=''):
                                 'studentAnswer':student_answer_ocr,
                                 'isCorrect':student_answer_correct_flag,
                                 'isBlank':student_answer_empty_flag,
+                                'rubricWiseResponse':rubric_wise_response,
                                 'status':'processed',
                                 },
         'key_value_pair_to_filter_data':{'studentId':student_id,'scanId':scan_id,'queId':que_id},
@@ -200,3 +201,22 @@ def find_data_in_string(data_string,type="ocr"):
         final_json_string = json.dumps(combined_json, indent=4)
         final_string = convert_feedback_format(final_json_string)
         return final_string
+
+def assign_rubric_id_to_response(rubric_json,response_json):
+    
+    max_score = 0
+    score = 0
+    if(isinstance(rubric_json,list)):
+        for rubrics_json_data_index in range(0,len(rubric_json)):
+            rubric_id = rubric_json[rubrics_json_data_index]['rubricId']
+            response_json[rubrics_json_data_index]['rubricId'] = rubric_id
+            response_json[rubrics_json_data_index]['rubricWiseMaxScore'] = rubric_json[rubrics_json_data_index]['score']
+            response_json[rubrics_json_data_index]['criteria'] = rubric_json[rubrics_json_data_index]['criteria']
+            del response_json[rubrics_json_data_index]['rubricIndex']
+            del response_json[rubrics_json_data_index]['rubricText']
+            score += response_json[rubrics_json_data_index]['rubricWiseScore']
+            max_score += rubric_json[rubrics_json_data_index]['score']
+        return response_json,score,max_score
+    else:
+        return response_json,score,max_score
+    
