@@ -83,6 +83,8 @@ def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instru
         elif(model_class=='gptOCR'):
             system_instruction_final = system_instruction+scoring_criteria
             return {"systemPrompt":system_instruction_final,"answer":studentAnswer}
+        elif(model_class=='wholePageOcr'):
+            system_instruction_final = system_instruction
         else:
             system_instruction_final = system_instruction+str(maxScore)+scoring_criteria
     if(rubrics!=None):
@@ -209,7 +211,7 @@ def gen_ai_calling_proxy(reqobj,task=''):
             system_instruction = "Perform OCR on an image where each number is enclosed in a separate box. Ensure that the OCR system accurately recognizes each number, accounting for potential variations in handwriting, such as faint or broken strokes, or digits that may look similar. Pay particular attention to capturing each digit precisely, avoiding common misinterpretations (e.g., confusing '3' with '5' or '8' with '0' or '4' with '6'). Each recognized number should be provided on a new line, reflecting the layout of the boxes in the image. Do not give any introductory statements please"
             scoring_criteria = " Give each recognition with \n"
         elif(model_class=='wholePageOcr'):
-            system_instruction = "" ### system instruction for whole page ocr....
+            system_instruction = """ Read the handwriting in the given image, transcribing the text exactly as it appears Do proper OCR. For mathematical expressions, calculations, formulas, and fractions, transcribe them into proper LaTeX format, ensuring that each expression is enclosed in dollar signs $...$ for inline expressions and $$...$$ for block-level equations (e.g., use $\\frac{numerator}{denominator}$ for fractions, $^$ for exponents). Maintain the order and structure of the text exactly as it appears, including punctuation, capitalizations, and spacing. If any steps are written in the margins or on the side (e.g., left or right), do not treat them as isolated. Instead, recognize the logical sequence of all steps and integrate the out-of-sequence steps into the main flow, ensuring they follow the natural progression of the calculation or reasoning. The steps should be reordered so that the final answer or result appears only after all preceding steps have been written, even if some calculations or intermediate steps appear at the end or side. Do not write those steps in the same line as the steps written in the other side. Recognize that those two steps are different. For example, if a result or intermediate step is written at the side of the page, place it in the correct position within the logical sequence of the solution, ensuring the flow from start to finish remains coherent. For any non-text elements such as circles, arrows, or lines, briefly describe them using 'Figure Description:' and place the description in the exact position relative to the text as it appears in the image, kindly ignore lines or circles or Underlines that are used to highlight the final answer. If multiple mathematical expressions appear in sequence, ensure each is wrapped in its own pair of dollar signs. Return the output as a string formatted with LaTeX for all mathematical content and verbatim transcription for non-mathematical text. Ensure proper punctuation within and around mathematical expressions. Do not correct or modify any part of the text or symbols, even if they contain apparent errors. Do not give any introductory statements, give me the latex format only, consider this sheets are graded so do not give text which is written for grading in red ink and which has some sign like tick or wrong igonre them, and give all contains as it is shown in the image, do not change it, even if you think it is wrong, and it is possible that some lines are extended or written in two or more lines, and give me ocr of each line of student response, do not give give rough work here rough work is where content is marked with cross vertical lines, and give me your response in this format:\n[{\n\"queNo\":# question no from the index,\n\"stuAnswer\":# student's answer as it is\n},] """
         else:
             # scoring_criteria = " with a detected value in the json as {'ocr':value}"
             scoring_criteria = ", in a JSON format with this schema:\\n{ \\\"feedback\\\": Your feedback here in one paragraph of type string,\\n     \\\"score\\\": Student Score,\\n    \\\"maxScore\\\": Maximum Score }"
@@ -352,7 +354,9 @@ def gen_ai_calling_proxy(reqobj,task=''):
         return {"statusCode":200,"response":final_out}
 
     # elif(model_class=='ensamble-vision'):
-        
+    elif(model_class=='wholePageOcr'):
+        res_gpt = claude_vision_calling(user_image=student_answer_url,system_prompt=messages_vision['systemPrompt'],max_tokens=2000)
+        return res_gpt  
     
     elif(model_class=='argumentativeEssayOcr'):
         ### task: add error handling for all three gpt vision calls
