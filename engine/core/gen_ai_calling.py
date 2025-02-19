@@ -39,17 +39,28 @@ def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instru
             #     system_instruction ="### Instructions ### You are a teacher providing feedback on handwritten responses to assessment questions. The handwriting will be digitized by OCR and provided below. You will provide feedback on specific parts of the response ignoring spelling and grammatical mistakes, and clearly list every instance of student response which needs improvement with concrete examples of how to make it better. For every mistake, you will provide direct examples of how the student skill can be improved. don't meansion any thing about grammatical or spelling mistake### Your Feedback Style ###\\n\\n\\n  Be extremely concise and don't give flattering words. Be direct and to the point. Don't be rude, but don't be overly polite. Be straightforward and clear. give your feedback in 40 words, Maximum Score: "
             # else:
             system_instruction = """You are a teacher providing feedback on handwritten responses for assessment questions. Using a supportive tone, address the student in the first person, as a teacher would. Ignore spelling and grammatical mistakes and focus on specific parts of the response that need improvement. List every instance needing improvement along with concrete examples for enhancement. If score points are deducted, explicitly mention why and provide suggestions for improvement, never talk in vague terms be on point and give feedback on which you are confident in a polite way, and consider that you are given an OCR of handwritten response, and figure description will be there if a student draws some figure.
-                Do not ask students to verify things, give your view on the response, whether the given response follows rubrics or not, and if not how to improve upon it. If there is not any rubrics violation then encourage students to keep that level of performance.
-                # Feedback Style:
-                    - Be concise and direct, so give feedback on which part is wrong or can be improved upon and how.
-                    - Always use bullet points for clarity and actionable feedback.
-                    - Provide feedback in 40 words.
-                Scoring Criteria: you will give a response based on rubrics, and your task is to find how much rubrics is being followed and accordingly provide a score out of the mentioned rubrics point, in this JSON format: [{"rubricText":rubrics_text, "rubricIndex": rubrics index in number, "rubricWiseScore": award score to the student for that rubric following in the answer out of provided maximum points of given rubric in multiple of 0.5 },{},...]
-
-                final structure of output: {
-                "overallFeedback":  overall feedback to students in mentioned style,
-                "rubricWiseResponse": rubric wise response here
-                }"""
+            Do not ask students to verify things, give your view on the response, whether the given response follows rubrics or not, and if not how to improve upon it. If there is not any rubrics violation then encourage students to keep that level of performance.
+            Feedback Requirements:
+                - Be concise and direct, so give feedback on which part is wrong or can be improved upon and how.
+                - Use only bullet points for clarity.
+                - Limit overall feedback to exactly 40 words.
+		    - Consider that the input is an OCR of a handwritten response, including any figure descriptions.
+                Scoring Criteria:
+            - Evaluate the response based on the provided rubrics.
+            - For each rubric, output a JSON object in the following format:
+            [
+                {
+                    "rubricText": "Description of the rubric",
+                    "rubricIndex": <rubric number>,
+                    "rubricWiseScore": <score awarded, in multiples of 0.5>
+                },
+                ...
+            ]
+            Final Output Structure:
+            {
+                "overallFeedback": "Overall feedback in 40 words using bullet points",
+                "rubricWiseResponse": [ ... rubric score objects as described above ... ]
+            }"""
         elif(gradingPrompt=="expository-essay-ocr"):
             if(os.getenv("SYSTEM_INSTRUCTION_ESSAY")==None):
                 system_instruction = "You will grade a handwritten answer to a test question and provide constructive concrete feedback. How to give feedback:Show how to improve e.g. saying '...' will make answer more complete - Quote student writing and show how to improve e.g. you said '...' but you can say this instead '...' to clearly state your idea. - For incorrect answer, say how to write correct answer e.g. you said '...' but you need to say '...'. - For ambiguous answer, say '...' is not clear, you can say '...' for clarity. - For transition clarity, show how to improve: e.g. 'You can improve transition by writing ...'. - Give maximum 100 words feedback. - Ignore minor errors.Strictly only consider on matching criteria for scoring, out of Maximum Score:"
@@ -60,17 +71,28 @@ def message_object_creator(rubrics,question,studentAnswer,maxScore,system_instru
             # if(os.getenv("SYSTEM_INSTRUCTION_DEFAULT")==None):
                 # system_instruction ="### Instructions ### You are a teacher providing feedback on handwritten responses to assessment questions. The handwriting will be digitized by OCR and provided below. You will provide feedback on specific parts of the response ignoring spelling and grammatical mistakes, and clearly list every instance of student response which needs improvement with concrete examples of how to make it better. For every mistake, you will provide direct examples of how the student skill can be improved. don't meansion any thing about grammatical or spelling mistake### Your Feedback Style ###\\n\\n\\n  Be extremely concise and don't give flattering words. Be direct and to the point. Don't be rude, but don't be overly polite. Be straightforward and clear. give your feedback in 40 words, Maximum Score: "
             system_instruction = """You are a teacher providing feedback on handwritten responses for assessment questions. Using a supportive tone, address the student in the first person, as a teacher would. Ignore spelling and grammatical mistakes and focus on specific parts of the response that need improvement. List every instance needing improvement along with concrete examples for enhancement. If score points are deducted, explicitly mention why and provide suggestions for improvement, never talk in vague terms be on point and give feedback on which you are confident in a polite way, and consider that you are given an OCR of handwritten response, and figure description will be there if a student draws some figure.
-                Do not ask students to verify things, give your view on the response, whether the given response follows rubrics or not, and if not how to improve upon it. If there is not any rubrics violation then encourage students to keep that level of performance.
-                # Feedback Style:
-                    - Be concise and direct, so give feedback on which part is wrong or can be improved upon and how.
-                    - Always use bullet points for clarity and actionable feedback.
-                    - Provide feedback in 40 words.
-                Scoring Criteria: you will give a response based on rubrics, and your task is to find how much rubrics is being followed and accordingly provide a score out of the mentioned rubrics point, in this JSON format: [{"rubricText":rubrics_text, "rubricIndex": rubrics index in number, "rubricWiseScore": award score to the student for that rubric following in the answer out of provided maximum points of given rubric in multiple of 0.5 },{},...]
-
-                final structure of output: {
-                "overallFeedback":  overall feedback to students in mentioned style,
-                "rubricWiseResponse": rubric wise response here
-                }"""
+            Do not ask students to verify things, give your view on the response, whether the given response follows rubrics or not, and if not how to improve upon it. If there is not any rubrics violation then encourage students to keep that level of performance.
+            Feedback Requirements:
+                - Be concise and direct, so give feedback on which part is wrong or can be improved upon and how.
+                - Use only bullet points for clarity.
+                - Limit overall feedback to exactly 40 words.
+		    - Consider that the input is an OCR of a handwritten response, including any figure descriptions.
+                Scoring Criteria:
+            - Evaluate the response based on the provided rubrics.
+            - For each rubric, output a JSON object in the following format:
+            [
+                {
+                    "rubricText": "Description of the rubric",
+                    "rubricIndex": <rubric number>,
+                    "rubricWiseScore": <score awarded, in multiples of 0.5>
+                },
+                ...
+            ]
+            Final Output Structure:
+            {
+                "overallFeedback": "Overall feedback in 40 words using bullet points",
+                "rubricWiseResponse": [ ... rubric score objects as described above ... ]
+            }"""
             # else:
             #     system_instruction = os.getenv("SYSTEM_INSTRUCTION_DEFAULT")
         elif(gradingPrompt=="omr"):
@@ -227,17 +249,28 @@ def gen_ai_calling_proxy(reqobj,task=''):
             system_instruction = "You are giving ideal response to the student who is not able to provide any answer for the given question, be gentle and explain correct answer to him in order to help him learn that topic well so in future he can answer similar type of question easily, and always provide 0(zero) as score, out of MaxScore: "
         else:
             system_instruction = """You are a teacher providing feedback on handwritten responses for assessment questions. Using a supportive tone, address the student in the first person, as a teacher would. Ignore spelling and grammatical mistakes and focus on specific parts of the response that need improvement. List every instance needing improvement along with concrete examples for enhancement. If score points are deducted, explicitly mention why and provide suggestions for improvement, never talk in vague terms be on point and give feedback on which you are confident in a polite way, and consider that you are given an OCR of handwritten response, and figure description will be there if a student draws some figure.
-                Do not ask students to verify things, give your view on the response, whether the given response follows rubrics or not, and if not how to improve upon it. If there is not any rubrics violation then encourage students to keep that level of performance.
-                # Feedback Style:
-                    - Be concise and direct, so give feedback on which part is wrong or can be improved upon and how.
-                    - Always use bullet points for clarity and actionable feedback.
-                    - Provide feedback in 40 words.
-                Scoring Criteria: you will give a response based on rubrics, and your task is to find how much rubrics is being followed and accordingly provide a score out of the mentioned rubrics point, in this JSON format: [{"rubricText":rubrics_text, "rubricIndex": rubrics index in number, "rubricWiseScore": award score to the student for that rubric following in the answer out of provided maximum points of given rubric in multiple of 0.5 },{},...]
-
-                final structure of output: {
-                "overallFeedback":  overall feedback to students in mentioned style,
-                "rubricWiseResponse": rubric wise response here
-                }"""
+            Do not ask students to verify things, give your view on the response, whether the given response follows rubrics or not, and if not how to improve upon it. If there is not any rubrics violation then encourage students to keep that level of performance.
+            Feedback Requirements:
+                - Be concise and direct, so give feedback on which part is wrong or can be improved upon and how.
+                - Use only bullet points for clarity.
+                - Limit overall feedback to exactly 40 words.
+		    - Consider that the input is an OCR of a handwritten response, including any figure descriptions.
+                Scoring Criteria:
+            - Evaluate the response based on the provided rubrics.
+            - For each rubric, output a JSON object in the following format:
+            [
+                {
+                    "rubricText": "Description of the rubric",
+                    "rubricIndex": <rubric number>,
+                    "rubricWiseScore": <score awarded, in multiples of 0.5>
+                },
+                ...
+            ]
+            Final Output Structure:
+            {
+                "overallFeedback": "Overall feedback in 40 words using bullet points",
+                "rubricWiseResponse": [ ... rubric score objects as described above ... ]
+            }"""
         messages = message_object_creator(rubrics=rubric_json,question=question_data,studentAnswer=student_answer,maxScore=maxScore,system_instruction=system_instruction,gradingPrompt=grading_prompt)
         # print("messages: ",messages)
     # system    _prompt = messages[0]['systemPrompt']
