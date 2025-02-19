@@ -24,7 +24,7 @@
         "subjectName":"science",
         "subjectId":1,
         "task":"ocr",
-        "promptText":"Perform OCR on the provided image containing science-related content. Transcribe all text present in the image exactly as it appears, covering topics such as physics, chemistry, biology, or earth science. Ensure that the output reflects the content precisely as seen in the image. Provide the result in the following format: ",
+        "promptText":"Read the handwriting in the given image, transcribing the text exactly as it appears. Do proper OCR. For mathematical expressions, calculations, formulas, and fractions, transcribe them into proper LaTeX format, ensuring that each expression is enclosed in dollar signs $...$ for inline expressions and $$...$$ for block-level equations (e.g., use $\\frac{numerator}{denominator}$ for fractions, ^ for exponents, and \\sqrt{...} for square roots). Extract the full text, mathematical symbols, and units from the provided physics question, ensuring the accurate transcription of all scientific symbols, such as $\\mu$ for the coefficient of friction, $\\theta$ for angles, $g$ for acceleration due to gravity, $𝛿m$, \\perp for perpendicular, $\\delta m$, $\\pi$, \\cdot for multiplication dots, \\times for cross products and any other fractions or complex symbols. Ensure that no modifications are made to the symbols or equations during transcription.If any diagrams or figures are present in the image, provide a 'Figure Description' section with detailed descriptions of any labels, arrows, lines, shapes, or symbols present, kindly ignore lines or circles that are used to highlight the final answer. If no diagrams are present, omit the 'Figure Description' section. The response should only include the extracted content, with no introductory or concluding statements. Return the output as a string formatted with LaTeX for all mathematical content and verbatim transcription for non-mathematical text. Ensure proper punctuation within and around mathematical expressions. Do not correct or modify any part of the text or symbols, even if they contain apparent errors. If any symbols are unrecognized, report them explicitly. Do not modify anything and give the text as it is. Do not give any introductory statements.",
         "defaultLLM":"gpt-4o"
     },
     {
@@ -35,45 +35,31 @@
         "defaultLLM":"gpt-4o"
     },
     {
-        "subjectName":"geography",
+        "subjectName":"social science",
         "subjectId":1,
         "task":"ocr",
-        "promptText":"",
-        "defaultLLM":"claude-3-5-sonnet-20240620de"
+        "promptText":"You are tasked with performing OCR on a provided image related to Social Science. Your objective is to transcribe all relevant text exactly as it appears, covering topics such as history, geography, economics, political science, and cultural studies. Maintain the exact spelling, punctuation, and phrasing as written. Exclude any text that is cut out or scribbled out. If the image contains diagrams, maps, or illustrations, describe them accurately. Do not analyze, interpret, or correct the content in any way. Provide the transcription in the following format:",
+        "defaultLLM":"gpt-4o"
     },
     {
         "subjectName":"physics",
         "subjectId":1,
         "task":"ocr",
         "promptText":"Read the handwriting in the given image, transcribing the text exactly as it appears. Do proper OCR. For mathematical expressions, calculations, formulas, and fractions, transcribe them into proper LaTeX format, ensuring that each expression is enclosed in dollar signs $...$ for inline expressions and $$...$$ for block-level equations (e.g., use $\\frac{numerator}{denominator}$ for fractions, ^ for exponents, and \\sqrt{...} for square roots). Extract the full text, mathematical symbols, and units from the provided physics question, ensuring the accurate transcription of all scientific symbols, such as $\\mu$ for the coefficient of friction, $\\theta$ for angles, $g$ for acceleration due to gravity, $𝛿m$, \\perp for perpendicular, $\\delta m$, $\\pi$, \\cdot for multiplication dots, \\times for cross products and any other fractions or complex symbols. Ensure that no modifications are made to the symbols or equations during transcription.If any diagrams or figures are present in the image, provide a 'Figure Description' section with detailed descriptions of any labels, arrows, lines, shapes, or symbols present, kindly ignore lines or circles that are used to highlight the final answer. If no diagrams are present, omit the 'Figure Description' section. The response should only include the extracted content, with no introductory or concluding statements. Return the output as a string formatted with LaTeX for all mathematical content and verbatim transcription for non-mathematical text. Ensure proper punctuation within and around mathematical expressions. Do not correct or modify any part of the text or symbols, even if they contain apparent errors. If any symbols are unrecognized, report them explicitly. Do not modify anything and give the text as it is. Do not give any introductory statements.",
-        "defaultLLM":"claude-3-5-sonnet-20240620"
+        "defaultLLM":"gpt-4o"
     },
     {
         "subjectName":"biology",
         "subjectId":1,
         "task":"ocr",
-        "promptText":"",
-        "defaultLLM":"claude-3-5-sonnet-20240620"
+        "promptText":"Perform OCR on the provided handwritten biology text. Accurately transcribe all biological terms, including scientific names, with correct capitalization and italics where applicable. Ensure that diagrams, anatomical structures, and processes (e.g., cell division, photosynthesis) are clearly labeled as per the original. Retain the structure of any classification tables or life cycle charts, with proper labeling and hierarchy. Transcribe any descriptions or notes as written, maintaining the original formatting. Specific: Read the handwriting in the given image and transcribe the text exactly as it appears, maintaining the original structure and order of the content. Do not add any introductions, summaries, or conclusions. Provide only the transcribed text as a simple string. Give me only whatever is there in the image. Just do the OCR and remove unnecessary statements. Ensure all biological terms, including scientific names, are correctly transcribed with appropriate capitalization and italics where applicable. If diagrams or figures are present, include a 'Figure Description' section describing relevant labels, shapes, and notations. If no diagrams or figures are present, omit the 'Figure Description' section. Return the output as a simple string, with no additional introductory or concluding statements.",
+        "defaultLLM":"gpt-4o"
     },
     {
         "subjectName":"chemistry",
         "subjectId":1,
         "task":"ocr",
-        "promptText":"",
-        "defaultLLM":"claude-3-5-sonnet-20240620"
-    },
-    {
-        "subjectName":"economics",
-        "subjectId":1,
-        "task":"ocr",
-        "promptText":"",
-        "defaultLLM":"gpt-4o"
-    },
-    {
-        "subjectName":"accountancy",
-        "subjectId":1,
-        "task":"ocr",
-        "promptText":"",
+        "promptText":"Read the handwriting in the given image, transcribing the text exactly as it appears. Do proper OCR. For mathematical expressions, calculations, formulas, and fractions, transcribe them into proper LaTeX format, ensuring that each expression is enclosed in dollar signs $...$ for inline expressions and $$...$$ for block-level equations (e.g., use $\\frac{numerator}{denominator}$ for fractions, ^ for exponents, and \\sqrt{...} for square roots). Extract the full text, mathematical symbols, and units from the provided physics question, ensuring the accurate transcription of all scientific symbols, such as $\\mu$ for the coefficient of friction, $\\theta$ for angles, $g$ for acceleration due to gravity, $𝛿m$, \\perp for perpendicular, $\\delta m$, $\\pi$, \\cdot for multiplication dots, \\times for cross products and any other fractions or complex symbols. Ensure that no modifications are made to the symbols or equations during transcription.If any diagrams or figures are present in the image, provide a 'Figure Description' section with detailed descriptions of any labels, arrows, lines, shapes, or symbols present, kindly ignore lines or circles that are used to highlight the final answer. If no diagrams are present, omit the 'Figure Description' section. The response should only include the extracted content, with no introductory or concluding statements. Return the output as a string formatted with LaTeX for all mathematical content and verbatim transcription for non-mathematical text. Ensure proper punctuation within and around mathematical expressions. Do not correct or modify any part of the text or symbols, even if they contain apparent errors. If any symbols are unrecognized, report them explicitly. Do not modify anything and give the text as it is. Do not give any introductory statements.",
         "defaultLLM":"gpt-4o"
     }
 ]

@@ -4,3 +4,4 @@
 .env.prod
 .env.staging
 *.txt
+smartpaper_ai_grading_venv/
