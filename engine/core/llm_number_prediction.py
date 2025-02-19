@@ -9,6 +9,8 @@ import base64
 from together import Together
 from io import BytesIO
 
+from engine.core.llm_calling import gemini_vision_number_runner
+from engine.core.llm_format_convertion import convert_normal_to_gemini_number
 from engine.gen_utils_files.utils import add_response_to_db
 
 anthropic_client = anthropic.Anthropic(
@@ -203,11 +205,19 @@ def assign_number_to_list(number_list,ensamble_list):
     return db_add_flag
         
 def predict_llm_number(number_list):
-    number_crop_list = []
-    for number in number_list:
-        # print(number)
-        number_crop_list.append(number['questionInfo']['studentAnswerUrl'])
-    ocr = NumberOCR(number_crop_list)
-    pred_numbers_list = ocr.run(model_name='llama')
-    assign_number_to_list(number_list=pred_numbers_list,ensamble_list=number_list)
-    return {"statusCode":200}
+    
+    ################ older implementation ################
+    # number_crop_list = []
+    # for number in number_list:
+    #     # print(number)
+    #     number_crop_list.append(number['questionInfo']['studentAnswerUrl'])
+    # ocr = NumberOCR(number_crop_list)
+    # pred_numbers_list = ocr.run(model_name='llama')
+    # assign_number_to_list(number_list=pred_numbers_list,ensamble_list=number_list)
+    # return {"statusCode":200}
+    
+    ################### new implementation ################
+    print("gemini number list: ",number_list)
+    reqobj_gemini = convert_normal_to_gemini_number(number_list)
+    response_number_list = gemini_vision_number_runner(reqobj_gemini['batchSize'],reqobj_gemini['base64Image'])
+    return response_number_list

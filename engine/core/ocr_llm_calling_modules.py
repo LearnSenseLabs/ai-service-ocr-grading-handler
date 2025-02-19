@@ -46,7 +46,7 @@ def openai_ocr(user_image,system_prompt="",description='',model_name='gpt-4o',la
         return response.status_code
 
 
-def claude_vision_calling(user_image,system_prompt,model_name="claude-3-5-sonnet-20241022", lang="eng"):
+def claude_vision_calling(user_image,system_prompt,model_name="claude-3-5-sonnet-20241022", lang="eng",max_tokens=1000):
     client = anthropic.Anthropic(
         api_key=os.getenv("claude_api_key"),
     )
@@ -55,7 +55,7 @@ def claude_vision_calling(user_image,system_prompt,model_name="claude-3-5-sonnet
     
     message = client.messages.create(
         model=model_name,
-        max_tokens=1000,
+        max_tokens=max_tokens,
         temperature=0,
         system=reqobj_claude["systemPrompt"],
         messages=messages_ocr,
